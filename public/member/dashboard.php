@@ -1,7 +1,7 @@
 <?php
 session_start();
-if (!isset($_SESSION['role']) || $_SESSION['role'] != 'clubadmin') {
-    header("Location: ../public/login.php");
+if (!isset($_SESSION['role']) || $_SESSION['role'] != 'member') {
+    header("Location: ../login.php");
     exit();
 }
 ?>
@@ -10,12 +10,12 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'clubadmin') {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Clubadmin Dashboard</title>
+    <title>Member Dashboard</title>
 </head>
 <body>
     <h2>Welcome, <?php echo $_SESSION['user_name']; ?>!</h2>
     <ul>
-        <li><a href="manage_clubs.php">Manage My Clubs</a></li>
+        <li><a href="request_role.php">Request Role Upgrade</a></li>
         <li><a href="../logout.php">Logout</a></li>
     </ul>
 </body>
