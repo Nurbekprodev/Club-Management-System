@@ -91,7 +91,7 @@ $pending_requests = mysqli_fetch_assoc($pending_requests_query)['total'];
 <div class="links">
     <a href="manage_clubs.php">Manage Clubs</a>
     <a href="role_requests.php">View Role Requests</a>
-    <a href="../logout.php">Logout</a>
+    <a href="../public/logout.php">Logout</a>
 </div>
 
 </body>

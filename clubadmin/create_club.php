@@ -8,33 +8,17 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'clubadmin') {
 
 include '../includes/database.php';
 
-if (!isset($_GET['id'])) {
-    header("Location: manage_clubs.php");
-    exit();
-}
-
-$club_id = $_GET['id'];
-$user_id = $_SESSION['user_id'];
-
-$query = "SELECT * FROM clubs WHERE id='$club_id' AND created_by='$user_id'";
-$result = mysqli_query($connection, $query);
-$club = mysqli_fetch_assoc($result);
-
-if (!$club) {
-    echo "Club not found or access denied.";
-    exit();
-}
-
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $name = mysqli_real_escape_string($connection, $_POST['name']);
     $description = mysqli_real_escape_string($connection, $_POST['description']);
+    $user_id = $_SESSION['user_id'];
 
-    $update = "UPDATE clubs SET name='$name', description='$description' WHERE id='$club_id' AND created_by='$user_id'";
-    if (mysqli_query($connection, $update)) {
-        header("Location: manage_clubs.php?success=Club updated successfully");
+    $query = "INSERT INTO clubs (name, description, created_by) VALUES ('$name', '$description', '$user_id')";
+    if (mysqli_query($connection, $query)) {
+        header("Location: manage_clubs.php?success=Club created successfully");
         exit();
     } else {
-        $error = "Error updating club.";
+        $error = "Error creating club.";
     }
 }
 ?>
@@ -43,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Edit Club</title>
+    <title>Create Club</title>
     <style>
         body { font-family: Arial; margin: 40px; background: #f7f7f7; }
         form { background: #fff; padding: 20px; width: 400px; border: 1px solid #ccc; }
@@ -54,8 +38,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 </head>
 <body>
 
-<h2>Edit Club</h2>
-
+<h2>Create Club</h2>
+<a href="manage_clubs.php" style="text-decoration:none;">← Back to Clubs</a>
 
 <?php if (isset($error)): ?>
     <p class="error"><?= $error ?></p>
@@ -63,13 +47,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 <form method="POST" action="">
     <label>Club Name:</label>
-    <input type="text" name="name" value="<?= htmlspecialchars($club['name']) ?>" required>
+    <input type="text" name="name" required>
 
     <label>Description:</label>
-    <textarea name="description" rows="4" required><?= htmlspecialchars($club['description']) ?></textarea>
+    <textarea name="description" rows="4" required></textarea>
 
-    <button type="submit">Update Club</button>
+    <button type="submit">Create Club</button>
 </form>
-<a href="manage_clubs.php" style="text-decoration:none;">← Back to Clubs</a>
+
 </body>
 </html>
