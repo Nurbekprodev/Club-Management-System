@@ -6,15 +6,26 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'clubadmin') {
     exit();
 }
 
+include '../includes/database.php';
+
+$success_message = $error_message = "";
+
+// Refresh $_SESSION['clubs'] in case new club was just added
+$user_id = $_SESSION['user_id'];
+$club_query = "SELECT id, name FROM clubs WHERE created_by = '$user_id'";
+$club_result = mysqli_query($connection, $club_query);
+
+$clubs = [];
+while ($row = mysqli_fetch_assoc($club_result)) {
+    $clubs[] = $row;
+}
+$_SESSION['clubs'] = $clubs;
+
 // make sure they have at least one club
 if (empty($_SESSION['clubs']) || !is_array($_SESSION['clubs'])) {
     echo "You are not assigned to any club yet. Please create a club first.";
     exit();
 }
-
-include '../includes/database.php';
-
-$success_message = $error_message = "";
 
 // handle form submission
 if ($_SERVER["REQUEST_METHOD"] == "POST") {

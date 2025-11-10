@@ -99,6 +99,7 @@ $total_events = mysqli_fetch_assoc($event_result)['total_events'] ?? 0;
     <div class="links">
         <a href="manage_clubs.php">Manage Clubs</a>
         <a href="manage_events.php">Manage Events</a>
+        <a href="manage_requests.php">Manage Requests</a>
         <a href="../public/logout.php">Logout</a>
     </div>
 </div>

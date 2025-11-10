@@ -1,10 +1,10 @@
 <?php
 session_start();
-include '../../includes/database.php';
+include '../includes/database.php';
 
 // check if user is logged in and is a member
 if (!isset($_SESSION['role']) || $_SESSION['role'] != 'member') {
-    header("Location: ../login.php");
+    header("Location: public/login.php");
     exit();
 }
 
@@ -38,7 +38,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <title>Request Role Upgrade | Club Management</title>
-    <link rel="stylesheet" href="../../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body>
     <h2>Request Role Upgrade</h2>
