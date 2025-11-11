@@ -23,7 +23,7 @@ $_SESSION['clubs'] = $clubs;
 
 // make sure they have at least one club
 if (empty($_SESSION['clubs']) || !is_array($_SESSION['clubs'])) {
-    echo "You are not assigned to any club yet. Please create a club first.";
+    echo "No clubs created yet. Please create a club first.";
     exit();
 }
 

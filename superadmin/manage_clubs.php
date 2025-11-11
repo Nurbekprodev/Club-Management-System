@@ -103,6 +103,6 @@ $result = mysqli_query($connection, $query);
         <tr><td colspan="5">No clubs found.</td></tr>
     <?php endif; ?>
 </table>
-
+<p><a href="dashboard.php">Back to Dashboard</a></p>
 </body>
 </html>

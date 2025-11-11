@@ -99,6 +99,7 @@ $result = mysqli_query($connection, "SELECT * FROM users ORDER BY id DESC");
     </tr>
     <?php endwhile; ?>
 </table>
+<p><a href="dashboard.php">Back to Dashboard</a></p>
 
 </body>
 </html>

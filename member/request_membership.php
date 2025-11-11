@@ -1,109 +1,120 @@
 <?php
 session_start();
+include "../includes/database.php";
 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'member') {
     header("Location: ../public/login.php");
     exit();
 }
 
-include "../includes/database.php";
-
-// Fetch all clubs that the member is NOT part of yet
 $member_id = $_SESSION['user_id'];
-
-// Clubs already joined
-$joined_sql = "SELECT club_id FROM club_members WHERE user_id = ?";
-$stmt = $connection->prepare($joined_sql);
-$stmt->bind_param("i", $member_id);
-$stmt->execute();
-$joined_result = $stmt->get_result();
-
-$joined_clubs = [];
-while ($row = $joined_result->fetch_assoc()) {
-    $joined_clubs[] = $row['club_id'];
-}
-
-// Clubs already requested
-$requested_sql = "SELECT club_id FROM memberships WHERE user_id = ? AND status = 'pending'";
-$stmt = $connection->prepare($requested_sql);
-$stmt->bind_param("i", $member_id);
-$stmt->execute();
-$requested_result = $stmt->get_result();
-
-$requested_clubs = [];
-while ($row = $requested_result->fetch_assoc()) {
-    $requested_clubs[] = $row['club_id'];
-}
-
-// Fetch all available clubs
-$all_clubs_sql = "SELECT id, name FROM clubs ORDER BY name ASC";
-$all_clubs_result = mysqli_query($connection, $all_clubs_sql);
+$success_message = $error_message = "";
 
 // Handle request submission
-$success_message = $error_message = "";
-if (isset($_POST['request_club'])) {
-    $club_id = $_POST['club_id'];
+if (isset($_POST['join_club'])) {
+    $club_id = intval($_POST['club_id']);
 
-    // Check if already joined or requested
-    if (in_array($club_id, $joined_clubs)) {
-        $error_message = "You are already a member of this club.";
-    } elseif (in_array($club_id, $requested_clubs)) {
-        $error_message = "You have already requested membership for this club.";
-    } else {
-        $insert_sql = "INSERT INTO memberships (user_id, club_id, status, requested_at) VALUES (?, ?, 'pending', NOW())";
-        $stmt = $connection->prepare($insert_sql);
-        $stmt->bind_param("ii", $member_id, $club_id);
-        if ($stmt->execute()) {
-            $success_message = "Membership request sent successfully!";
+    // Check if a row already exists in club_members for this user+club
+    $checkSql = "SELECT id, status FROM club_members WHERE user_id = ? AND club_id = ?";
+    $stmt = $connection->prepare($checkSql);
+    $stmt->bind_param("ii", $member_id, $club_id);
+    $stmt->execute();
+    $res = $stmt->get_result();
+
+    if ($res->num_rows == 0) {
+        // Insert new request with status = pending
+        $insertSql = "INSERT INTO club_members (club_id, user_id, status, created_at) VALUES (?, ?, 'pending', NOW())";
+        $ins = $connection->prepare($insertSql);
+        $ins->bind_param("ii", $club_id, $member_id);
+        if ($ins->execute()) {
+            $success_message = "Membership request sent successfully.";
         } else {
-            $error_message = "Error sending request. Please try again.";
+            $error_message = "Error sending request: " . $ins->error;
+        }
+    } else {
+        $row = $res->fetch_assoc();
+        if ($row['status'] === 'pending') {
+            $error_message = "You already have a pending request for this club.";
+        } elseif ($row['status'] === 'approved') {
+            $error_message = "You are already a member of this club.";
+        } elseif ($row['status'] === 'rejected') {
+            // Allow re-request by updating the same row to pending
+            $updateSql = "UPDATE club_members SET status='pending', created_at = NOW() WHERE id = ?";
+            $upd = $connection->prepare($updateSql);
+            $upd->bind_param("i", $row['id']);
+            if ($upd->execute()) {
+                $success_message = "Membership request re-submitted successfully.";
+            } else {
+                $error_message = "Error re-submitting request: " . $upd->error;
+            }
+        } else {
+            $error_message = "You cannot request this club at the moment.";
         }
     }
 }
-?>
 
+// Fetch all clubs (to show list)
+$clubsSql = "SELECT id, name, description FROM clubs ORDER BY name ASC";
+$clubsResult = mysqli_query($connection, $clubsSql);
+
+// Fetch the user's membership statuses from club_members
+$statusSql = "SELECT club_id, status FROM club_members WHERE user_id = ?";
+$stmt = $connection->prepare($statusSql);
+$stmt->bind_param("i", $member_id);
+$stmt->execute();
+$statusRes = $stmt->get_result();
+
+$club_status = [];
+while ($r = $statusRes->fetch_assoc()) {
+    $club_status[$r['club_id']] = $r['status'];
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Request Club Membership</title>
-    <style>
-        body { font-family: Arial; margin: 40px; background: #f7f7f7; }
-        h2 { color: #333; }
-        .message { padding: 10px; margin: 10px 0; border-radius: 5px; }
-        .success { background: #d4edda; color: #155724; }
-        .error { background: #f8d7da; color: #721c24; }
-        form { background: #fff; padding: 15px; border: 1px solid #ccc; width: 400px; }
-        select, button { width: 100%; margin-bottom: 10px; padding: 8px; }
-        a { display: inline-block; margin-top: 15px; }
-    </style>
+<meta charset="utf-8">
+<title>Request Membership</title>
+<style>
+    body { font-family: Arial; margin: 40px; }
+    .club-card { border:1px solid #ccc; padding:12px; margin-bottom:12px; }
+    button, .btn { padding:8px 12px; cursor:pointer; }
+    .success { color: green; }
+    .error { color: red; }
+    a.button { display:inline-block; margin-bottom:12px; padding:8px 12px; background:#4CAF50; color:#fff; text-decoration:none; border-radius:4px; }
+</style>
 </head>
 <body>
 
-<h2>Request Membership</h2>
+<h2>All Clubs</h2>
+<a href="dashboard.php" class="button">Back to Dashboard</a>
 
-<?php if ($success_message): ?>
-    <div class="message success"><?= $success_message ?></div>
-<?php elseif ($error_message): ?>
-    <div class="message error"><?= $error_message ?></div>
-<?php endif; ?>
+<?php if ($success_message): ?><p class="success"><?= htmlspecialchars($success_message) ?></p><?php endif; ?>
+<?php if ($error_message): ?><p class="error"><?= htmlspecialchars($error_message) ?></p><?php endif; ?>
 
-<form method="POST" action="">
-    <label>Select a Club to Join:</label>
-    <select name="club_id" required>
-        <option value="">-- Select Club --</option>
-        <?php while ($club = mysqli_fetch_assoc($all_clubs_result)) : ?>
-            <?php 
-            // Skip clubs already joined or requested
-            if (in_array($club['id'], $joined_clubs) || in_array($club['id'], $requested_clubs)) continue; 
-            ?>
-            <option value="<?= $club['id'] ?>"><?= htmlspecialchars($club['name']) ?></option>
-        <?php endwhile; ?>
-    </select>
-    <button type="submit" name="request_club">Request Membership</button>
-</form>
+<?php while ($club = mysqli_fetch_assoc($clubsResult)): ?>
+    <div class="club-card">
+        <h3><?= htmlspecialchars($club['name']) ?></h3>
+        <p><?= htmlspecialchars($club['description']) ?></p>
 
-<a href="dashboard.php">Back to Dashboard</a>
+        <?php
+        $cid = $club['id'];
+        if (isset($club_status[$cid]) && $club_status[$cid] === 'approved'): ?>
+            <button disabled>Member</button>
+        <?php elseif (isset($club_status[$cid]) && $club_status[$cid] === 'pending'): ?>
+            <button disabled>Request Pending</button>
+        <?php elseif (isset($club_status[$cid]) && $club_status[$cid] === 'rejected'): ?>
+            <form method="POST" style="display:inline;">
+                <input type="hidden" name="club_id" value="<?= $cid ?>">
+                <button type="submit" name="join_club">Request Again</button>
+            </form>
+        <?php else: ?>
+            <form method="POST" style="display:inline;">
+                <input type="hidden" name="club_id" value="<?= $cid ?>">
+                <button type="submit" name="join_club">Request to Join</button>
+            </form>
+        <?php endif; ?>
+    </div>
+<?php endwhile; ?>
 
 </body>
 </html>
