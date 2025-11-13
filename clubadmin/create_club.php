@@ -8,19 +8,36 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'clubadmin') {
 
 include '../includes/database.php';
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $name = mysqli_real_escape_string($connection, $_POST['name']);
-    $description = mysqli_real_escape_string($connection, $_POST['description']);
-    $user_id = $_SESSION['user_id'];
+if (isset($_POST['create_club'])) {
+    $club_name = $_POST['club_name'];
+    $description = $_POST['description'];
+    $category = $_POST['category'];
+    $location = $_POST['location'];
+    $contact_email = $_POST['contact_email'];
+    $contact_phone = $_POST['contact_phone'];
+    $founded_year = $_POST['founded_year'];
+    $created_by = $_SESSION['user_id'];
 
-    $query = "INSERT INTO clubs (name, description, created_by) VALUES ('$name', '$description', '$user_id')";
-    if (mysqli_query($connection, $query)) {
-        header("Location: manage_clubs.php?success=Club created successfully");
-        exit();
+    // Handle file upload
+    $logo = null;
+    if (!empty($_FILES['logo']['name'])) {
+        $logo = '../includes/images/' . basename($_FILES['logo']['name']);
+        move_uploaded_file($_FILES['logo']['tmp_name'], $logo);
+    }
+
+    $stmt = $connection->prepare("INSERT INTO clubs 
+        (name, description, category, location, contact_email, contact_phone, logo, founded_year, created_by, created_at) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+
+    $stmt->bind_param("ssssssssi", $club_name, $description, $category, $location, $contact_email, $contact_phone, $logo, $founded_year, $created_by);
+
+    if ($stmt->execute()) {
+        echo "<script>alert('Club created successfully'); window.location='manage_clubs.php';</script>";
     } else {
-        $error = "Error creating club.";
+        echo "<script>alert('Error creating club');</script>";
     }
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -45,15 +62,34 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <p class="error"><?= $error ?></p>
 <?php endif; ?>
 
-<form method="POST" action="">
+<form action="create_club.php" method="POST" enctype="multipart/form-data">
     <label>Club Name:</label>
-    <input type="text" name="name" required>
+    <input type="text" name="club_name" required>
 
     <label>Description:</label>
-    <textarea name="description" rows="4" required></textarea>
+    <textarea name="description" required></textarea>
 
-    <button type="submit">Create Club</button>
+    <label>Category:</label>
+    <input type="text" name="category" placeholder="e.g., Sports, Coding, Music">
+
+    <label>Location:</label>
+    <input type="text" name="location" placeholder="Campus / City">
+
+    <label>Contact Email:</label>
+    <input type="email" name="contact_email" required>
+
+    <label>Contact Phone:</label>
+    <input type="text" name="contact_phone">
+
+    <label>Founded Year:</label>
+    <input type="number" name="founded_year" min="1900" max="2099">
+
+    <label>Club Logo:</label>
+    <input type="file" name="logo">
+
+    <button type="submit" name="create_club">Create Club</button>
 </form>
+
 
 </body>
 </html>

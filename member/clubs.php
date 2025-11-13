@@ -14,7 +14,6 @@ $success_message = $error_message = "";
 if (isset($_POST['join_club'])) {
     $club_id = intval($_POST['club_id']);
 
-    // Check if a record exists
     $checkSql = "SELECT id, status FROM club_members WHERE user_id=? AND club_id=?";
     $stmt = $connection->prepare($checkSql);
     $stmt->bind_param("ii", $member_id, $club_id);
@@ -22,7 +21,6 @@ if (isset($_POST['join_club'])) {
     $res = $stmt->get_result();
 
     if ($res->num_rows == 0) {
-        // Insert new request as pending
         $insertSql = "INSERT INTO club_members (club_id, user_id, status, joined_at) VALUES (?, ?, 'pending', NOW())";
         $ins = $connection->prepare($insertSql);
         $ins->bind_param("ii", $club_id, $member_id);
@@ -33,13 +31,11 @@ if (isset($_POST['join_club'])) {
         }
     } else {
         $row = $res->fetch_assoc();
-        // Allow re-request if previous rejected (status NULL)
         if ($row['status'] === 'pending') {
             $error_message = "You already have a pending request.";
         } elseif ($row['status'] === 'approved') {
             $error_message = "You are already a member.";
         } else {
-            // Re-request
             $updateSql = "UPDATE club_members SET status='pending', joined_at=NOW() WHERE id=?";
             $upd = $connection->prepare($updateSql);
             $upd->bind_param("i", $row['id']);
@@ -53,10 +49,10 @@ if (isset($_POST['join_club'])) {
 }
 
 // Fetch all clubs
-$clubsSql = "SELECT id, name, description FROM clubs ORDER BY name ASC";
+$clubsSql = "SELECT id, name, description, category, logo FROM clubs ORDER BY name ASC";
 $clubsResult = mysqli_query($connection, $clubsSql);
 
-// Fetch user's current membership statuses
+// Fetch user's club status
 $statusSql = "SELECT club_id, status FROM club_members WHERE user_id=?";
 $stmt = $connection->prepare($statusSql);
 $stmt->bind_param("i", $member_id);
@@ -74,11 +70,14 @@ while ($r = $statusRes->fetch_assoc()) {
 <meta charset="utf-8">
 <title>All Clubs</title>
 <style>
-body { font-family: Arial; margin: 40px; }
-.club-card { border:1px solid #ccc; padding:12px; margin-bottom:12px; }
-button, .btn { padding:8px 12px; cursor:pointer; }
-.success { color: green; }
-.error { color: red; }
+body { font-family: Arial; margin: 40px; background:#f7f7f7; }
+.club-card { border:1px solid #ccc; background:#fff; padding:12px; margin-bottom:12px; border-radius:5px; }
+button, .btn { padding:8px 12px; cursor:pointer; border:none; border-radius:4px; }
+.btn-primary { background:#4CAF50; color:#fff; }
+.btn-secondary { background:#008CBA; color:#fff; }
+button[disabled] { background:#ccc; cursor:not-allowed; }
+.success { color:green; }
+.error { color:red; }
 a.button { display:inline-block; margin-bottom:12px; padding:8px 12px; background:#4CAF50; color:#fff; text-decoration:none; border-radius:4px; }
 </style>
 </head>
@@ -92,8 +91,15 @@ a.button { display:inline-block; margin-bottom:12px; padding:8px 12px; backgroun
 
 <?php while($club = mysqli_fetch_assoc($clubsResult)): ?>
 <div class="club-card">
+    <?php if (!empty($club['logo'])): ?>
+        <img src="<?= htmlspecialchars($club['logo']) ?>" alt="Logo" width="80" height="80"><br>
+    <?php endif; ?>
+
     <h3><?= htmlspecialchars($club['name']) ?></h3>
     <p><?= htmlspecialchars($club['description']) ?></p>
+    <p><strong>Category:</strong> <?= htmlspecialchars($club['category']) ?></p>
+
+    <a href="club_details.php?id=<?= $club['id'] ?>" class="btn btn-secondary">View Details</a>
 
     <?php
     $cid = $club['id'];
@@ -103,16 +109,16 @@ a.button { display:inline-block; margin-bottom:12px; padding:8px 12px; backgroun
             echo "<button disabled>Member</button>";
         } elseif ($st === 'pending') {
             echo "<button disabled>Request Pending</button>";
-        } else { // rejected or NULL
-            echo "<form method='POST'>
+        } else {
+            echo "<form method='POST' style='display:inline;'>
                     <input type='hidden' name='club_id' value='$cid'>
-                    <button type='submit' name='join_club'>Request to Join</button>
+                    <button type='submit' name='join_club' class='btn btn-primary'>Join Club</button>
                   </form>";
         }
     } else {
-        echo "<form method='POST'>
+        echo "<form method='POST' style='display:inline;'>
                 <input type='hidden' name='club_id' value='$cid'>
-                <button type='submit' name='join_club'>Request to Join</button>
+                <button type='submit' name='join_club' class='btn btn-primary'>Join Club</button>
               </form>";
     }
     ?>
