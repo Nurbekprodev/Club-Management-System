@@ -8,98 +8,120 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'clubadmin') {
 
 include '../includes/database.php';
 
-$success_message = $error_message = "";
+$admin_id = $_SESSION['user_id'];
 
-// Refresh $_SESSION['clubs'] in case new club was just added
-$user_id = $_SESSION['user_id'];
-$club_query = "SELECT id, name FROM clubs WHERE created_by = '$user_id'";
-$club_result = mysqli_query($connection, $club_query);
-
-$clubs = [];
-while ($row = mysqli_fetch_assoc($club_result)) {
-    $clubs[] = $row;
-}
-$_SESSION['clubs'] = $clubs;
-
-// make sure they have at least one club
-if (empty($_SESSION['clubs']) || !is_array($_SESSION['clubs'])) {
-    echo "No clubs created yet. Please create a club first.";
-    exit();
-}
-
-// handle form submission
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $title = mysqli_real_escape_string($connection, $_POST['title']);
-    $description = mysqli_real_escape_string($connection, $_POST['description']);
+// Handle form submission
+if (isset($_POST['create_event'])) {
+    $club_id = intval($_POST['club_id']);
+    $title = trim($_POST['title']);
+    $description = trim($_POST['description']);
     $date = $_POST['date'];
-    $club_id = $_POST['club_id'];
-    $created_by = $_SESSION['user_id'];
+    $event_time = $_POST['event_time'];
+    $venue = trim($_POST['venue']);
+    $registration_deadline = $_POST['registration_deadline'];
+    $max_participants = intval($_POST['max_participants']);
+    $event_image = null;
 
-    if (!empty($title) && !empty($description) && !empty($date) && !empty($club_id)) {
-        $insert = "INSERT INTO events (club_id, title, description, date, created_by) 
-                   VALUES ('$club_id', '$title', '$description', '$date', '$created_by')";
-        if (mysqli_query($connection, $insert)) {
-            header("Location: manage_events.php?success=Event added successfully");
-            exit();
-        } else {
-            $error_message = "Error adding event. Please try again.";
+    // Handle image upload
+    if (!empty($_FILES['event_image']['name'])) {
+        $target_dir = "../includes/images/";
+        if (!is_dir($target_dir)) {
+            mkdir($target_dir, 0777, true);
         }
+        $target_file = $target_dir . basename($_FILES['event_image']['name']);
+        if (move_uploaded_file($_FILES['event_image']['tmp_name'], $target_file)) {
+            $event_image = $target_file;
+        }
+    }
+
+    // Insert new event
+    $sql = "INSERT INTO events 
+            (club_id, created_by, title, description, date, event_time, venue, registration_deadline, max_participants, event_image, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+
+    $stmt = $connection->prepare($sql);
+    $stmt->bind_param(
+        "iissssssis",
+        $club_id,
+        $admin_id,
+        $title,
+        $description,
+        $date,
+        $event_time,
+        $venue,
+        $registration_deadline,
+        $max_participants,
+        $event_image
+    );
+
+    if ($stmt->execute()) {
+        echo "<script>alert('Event created successfully!'); window.location='manage_events.php';</script>";
+        exit();
     } else {
-        $error_message = "All fields are required.";
+        echo "<script>alert('Error creating event: " . $stmt->error . "');</script>";
     }
 }
+
+// Fetch clubs created by this admin (for dropdown)
+$clubs = $connection->prepare("SELECT id, name FROM clubs WHERE created_by = ?");
+$clubs->bind_param("i", $admin_id);
+$clubs->execute();
+$clubList = $clubs->get_result();
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Create Event</title>
-    <style>
-        body { font-family: Arial; margin: 40px; background: #f7f7f7; }
-        h2 { color: #333; }
-        form { background: #fff; padding: 20px; border: 1px solid #ccc; width: 400px; }
-        input, textarea, select, button {
-            width: 100%; margin-bottom: 10px; padding: 8px;
-        }
-        button {
-            background: #4CAF50; color: white; border: none; cursor: pointer;
-        }
-        button:hover { background: #45a049; }
-        .error { color: red; }
-        .back-link { display: inline-block; margin-top: 10px; }
-    </style>
+<meta charset="UTF-8">
+<title>Create Event</title>
+<style>
+    body { font-family: Arial; margin: 40px; background: #f7f7f7; }
+    form { background: #fff; padding: 20px; width: 450px; border: 1px solid #ccc; border-radius: 8px; }
+    input, textarea, select { width: 100%; margin-bottom: 10px; padding: 8px; }
+    button { padding: 10px 16px; background: #4CAF50; color: white; border: none; cursor: pointer; }
+    a { text-decoration: none; color: #4CAF50; }
+</style>
 </head>
 <body>
 
-<h2>Create New Event</h2>
+<h2>Create Event</h2>
+<a href="manage_events.php">← Back to Events</a>
 
-<?php if ($error_message): ?>
-    <p class="error"><?= $error_message ?></p>
-<?php endif; ?>
-
-<form method="POST" action="">
+<form action="create_event.php" method="POST" enctype="multipart/form-data">
     <label>Club:</label>
     <select name="club_id" required>
         <option value="">Select Club</option>
-        <?php foreach ($_SESSION['clubs'] as $club): ?>
-            <option value="<?= $club['id'] ?>"><?= htmlspecialchars($club['name']) ?></option>
-        <?php endforeach; ?>
+        <?php while ($c = $clubList->fetch_assoc()): ?>
+            <option value="<?= $c['id'] ?>"><?= htmlspecialchars($c['name']) ?></option>
+        <?php endwhile; ?>
     </select>
 
     <label>Title:</label>
     <input type="text" name="title" required>
 
     <label>Description:</label>
-    <textarea name="description" rows="4" required></textarea>
+    <textarea name="description" required></textarea>
 
     <label>Date:</label>
     <input type="date" name="date" required>
 
-    <button type="submit">Add Event</button>
-</form>
+    <label>Time:</label>
+    <input type="time" name="event_time" required>
 
-<a href="manage_events.php" class="back-link">← Back to Events</a>
+    <label>Venue:</label>
+    <input type="text" name="venue" required>
+
+    <label>Registration Deadline:</label>
+    <input type="date" name="registration_deadline" required>
+
+    <label>Max Participants:</label>
+    <input type="number" name="max_participants" required min="1">
+
+    <label>Event Image:</label>
+    <input type="file" name="event_image">
+
+    <button type="submit" name="create_event">Create Event</button>
+</form>
 
 </body>
 </html>
