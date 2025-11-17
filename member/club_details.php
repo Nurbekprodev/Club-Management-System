@@ -7,10 +7,15 @@ if (!isset($_GET['id'])) {
 }
 
 $club_id = intval($_GET['id']);
+
 $member_id = $_SESSION['user_id'] ?? null;
 $role = $_SESSION['role'] ?? null;
 
-// Fetch club
+$success = ""; // success message holder
+
+// =====================
+// FETCH CLUB DETAILS
+// =====================
 $clubSql = "SELECT * FROM clubs WHERE id=?";
 $stmt = $connection->prepare($clubSql);
 $stmt->bind_param("i", $club_id);
@@ -21,7 +26,9 @@ if (!$club) {
     die("Club not found.");
 }
 
-// Check membership
+// =====================
+// MEMBERSHIP STATUS
+// =====================
 $membership_status = "";
 $membership_id = 0;
 
@@ -38,30 +45,67 @@ if ($member_id && $role === "member") {
     }
 }
 
-// Handle Join
+// =====================
+// JOIN CLUB
+// =====================
 if (isset($_POST['join_club']) && $member_id && $role === "member") {
     $join = $connection->prepare("INSERT INTO club_members (club_id, user_id, status, joined_at) VALUES (?, ?, 'pending', NOW())");
     $join->bind_param("ii", $club_id, $member_id);
     $join->execute();
-    header("Location: club_details.php?id=" . $club_id);
-    exit();
+
+    $success = "Membership request sent!";
 }
 
-// Handle Leave
+// =====================
+// LEAVE CLUB
+// =====================
 if (isset($_POST['leave_club']) && $membership_status === "approved") {
     $leave = $connection->prepare("DELETE FROM club_members WHERE id=?");
     $leave->bind_param("i", $membership_id);
     $leave->execute();
-    header("Location: club_details.php?id=" . $club_id);
-    exit();
+
+    $success = "You left the club.";
+    $membership_status = ""; // reset display
 }
 
-// Pagination for events
+// =====================
+// REGISTER EVENT
+// =====================
+if (isset($_POST['register_event_id']) && $member_id && $role === "member") {
+    $eid = intval($_POST['register_event_id']);
+
+    // Check duplicate
+    $check = $connection->prepare("SELECT id FROM event_registrations WHERE event_id=? AND member_id=?");
+    $check->bind_param("ii", $eid, $member_id);
+    $check->execute();
+
+    if ($check->get_result()->num_rows == 0) {
+        $reg = $connection->prepare("INSERT INTO event_registrations (event_id, member_id, registered_at) VALUES (?, ?, NOW())");
+        $reg->bind_param("ii", $eid, $member_id);
+        $reg->execute();
+        $success = "Registered successfully!";
+    }
+}
+
+// =====================
+// LEAVE EVENT
+// =====================
+if (isset($_POST['leave_event_id']) && $member_id && $role === "member") {
+    $eid = intval($_POST['leave_event_id']);
+
+    $del = $connection->prepare("DELETE FROM event_registrations WHERE event_id=? AND member_id=?");
+    $del->bind_param("ii", $eid, $member_id);
+    $del->execute();
+    $success = "You left the event.";
+}
+
+// =====================
+// EVENT PAGINATION
+// =====================
 $limit = 5;
-$page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
 $offset = ($page - 1) * $limit;
 
-// Count events
 $countSql = "SELECT COUNT(*) AS total FROM events WHERE club_id=?";
 $cs = $connection->prepare($countSql);
 $cs->bind_param("i", $club_id);
@@ -75,6 +119,7 @@ $ev = $connection->prepare($eventSql);
 $ev->bind_param("iii", $club_id, $offset, $limit);
 $ev->execute();
 $events = $ev->get_result();
+
 ?>
 <!DOCTYPE html>
 <html>
@@ -84,6 +129,15 @@ $events = $ev->get_result();
 <body>
 
 <a href="clubs.php">← Back to Clubs</a>
+
+<br><br>
+
+<!-- SUCCESS MESSAGE -->
+<?php if (!empty($success)): ?>
+<div style="background:#d4edda; color:#155724; padding:10px; border-radius:5px; margin-bottom:15px;">
+    <?= $success ?>
+</div>
+<?php endif; ?>
 
 <h2><?= htmlspecialchars($club['name']) ?></h2>
 
@@ -97,6 +151,7 @@ $events = $ev->get_result();
 
 <hr>
 
+<!-- MEMBERSHIP SECTION -->
 <h3>Membership</h3>
 
 <?php if (!$member_id || $role !== "member"): ?>
@@ -106,12 +161,13 @@ $events = $ev->get_result();
 
     <?php if ($membership_status === "approved"): ?>
         <p style="color:green"><b>You are a member of this club.</b></p>
+
         <form method="POST">
             <button type="submit" name="leave_club" style="background:red; color:white">Leave Club</button>
         </form>
 
     <?php elseif ($membership_status === "pending"): ?>
-        <p style="color:orange"><b>Your membership request is pending.</b></p>
+        <p style="color:orange"><b>Your membership request is pending approval.</b></p>
 
     <?php else: ?>
         <form method="POST">
@@ -123,9 +179,10 @@ $events = $ev->get_result();
 
 <hr>
 
+<!-- EVENTS SECTION -->
 <h3>Club Events</h3>
 
-<?php if ($events->num_rows == 0): ?>
+<?php if ($events->num_rows === 0): ?>
     <p>No events yet.</p>
 
 <?php else: ?>
@@ -134,7 +191,7 @@ $events = $ev->get_result();
 
             <h4><?= htmlspecialchars($e['title']) ?></h4>
 
-            <?php if ($e['event_image']): ?>
+            <?php if (!empty($e['event_image'])): ?>
                 <img src="<?= htmlspecialchars($e['event_image']) ?>" width="150"><br><br>
             <?php endif; ?>
 
@@ -144,40 +201,39 @@ $events = $ev->get_result();
             <p><b>Registration Deadline:</b> <?= $e['registration_deadline'] ?></p>
             <p><b>Max Participants:</b> <?= $e['max_participants'] ?></p>
 
+            <!-- CHECK REGISTRATION -->
             <?php
-            // determine registration state
-            $today = date('Y-m-d');
-            $canRegister = ($e['date'] >= $today) && ($e['registration_deadline'] >= $today);
-            if ($e['date'] < $today) {
-                // past event
-                echo '<span class="btn btn-disabled">Event passed</span>';
-            } else {
-                if (!$member_id || $role !== 'member') {
-                    // not a logged-in member
-                    echo '<a class="btn btn-register" href="../public/login.php">Login to Register</a>';
-                } else {
-                    // logged-in member: link to register_event.php
-                    if (!$canRegister) {
-                        echo '<span class="btn btn-disabled">Registration closed</span>';
-                    } else {
-                        // show register link (register_event.php checks membership/duplicates)
-                        echo '<a class="btn btn-register" href="register_event.php?event_id=' . $e['id'] . '">Register</a>';
-                    }
-                }
-            }
+            $event_id = $e['id'];
+            $check = $connection->prepare("SELECT id FROM event_registrations WHERE event_id=? AND member_id=?");
+            $check->bind_param("ii", $event_id, $member_id);
+            $check->execute();
+            $registered = $check->get_result()->num_rows > 0;
             ?>
+
+            <!-- REGISTER / LEAVE BUTTON -->
+            <?php if ($registered): ?>
+                <form method="POST">
+                    <input type="hidden" name="leave_event_id" value="<?= $event_id ?>">
+                    <button style="background:red; color:white; padding:6px 12px; border:none;">Leave Event</button>
+                </form>
+            <?php else: ?>
+                <form method="POST">
+                    <input type="hidden" name="register_event_id" value="<?= $event_id ?>">
+                    <button style="background:green; color:white; padding:6px 12px; border:none;">Register</button>
+                </form>
+            <?php endif; ?>
 
         </div>
     <?php endwhile; ?>
 
-    <!-- Pagination -->
-    <div>
+    <!-- PAGINATION -->
+    <div style="margin-top:20px;">
         <?php if ($page > 1): ?>
-            <a href="?id=<?= $club_id ?>&page=<?= $page - 1 ?>">Previous</a>
+            <a href="?id=<?= $club_id ?>&page=<?= $page - 1 ?>">← Previous</a>
         <?php endif; ?>
 
         <?php if ($page < $totalPages): ?>
-            <a href="?id=<?= $club_id ?>&page=<?= $page + 1 ?>">Next</a>
+            <a href="?id=<?= $club_id ?>&page=<?= $page + 1 ?>" style="margin-left:20px;">Next →</a>
         <?php endif; ?>
     </div>
 
