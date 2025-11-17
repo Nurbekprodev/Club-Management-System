@@ -12,6 +12,11 @@ $success = "";
 
 // check form submission
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Verify CSRF token
+    if (!isset($_POST['csrf_token']) || !verifyCSRFToken($_POST['csrf_token'])) {
+        die("CSRF token validation failed.");
+    }
+    
     $email = trim($_POST['email']);
     $password = trim($_POST['password']);
 
@@ -21,12 +26,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // if no errors
     if (!array_filter($errors)) {
-        $sql = "SELECT * FROM users WHERE email = '$email'";
-        $result = mysqli_query($connection, $sql);
+        $stmt = $connection->prepare("SELECT * FROM users WHERE email = ?");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
 
-        if (mysqli_num_rows($result) == 1) {
-            $user = mysqli_fetch_assoc($result);
+        if ($result->num_rows == 1) {
+            $user = $result->fetch_assoc();
             if (password_verify($password, $user['password'])) {
+                // Regenerate session ID for security
+                session_regenerate_id(true);
+                
                 // start session
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['user_name'] = $user['name'];
@@ -75,6 +85,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <h2>Login</h2>
 
     <form action="" method="POST">
+        <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+        
         <label>Email:</label><br>
         <input type="email" name="email" value="<?php echo htmlspecialchars($email); ?>"><br>
         <small style="color:red;"><?php echo $errors["email"]; ?></small><br><br>

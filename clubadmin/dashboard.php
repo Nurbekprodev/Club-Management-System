@@ -11,14 +11,18 @@ include '../includes/database.php';
 
 // Count clubs created by this admin
 $user_id = $_SESSION['user_id'];
-$club_query = "SELECT COUNT(*) AS total_clubs FROM clubs WHERE created_by = '$user_id'";
-$club_result = mysqli_query($connection, $club_query);
-$total_clubs = mysqli_fetch_assoc($club_result)['total_clubs'] ?? 0;
+$club_stmt = $connection->prepare("SELECT COUNT(*) AS total_clubs FROM clubs WHERE created_by = ?");
+$club_stmt->bind_param("i", $user_id);
+$club_stmt->execute();
+$club_result = $club_stmt->get_result();
+$total_clubs = $club_result->fetch_assoc()['total_clubs'] ?? 0;
 
 // Count events created by this admin
-$event_query = "SELECT COUNT(*) AS total_events FROM events WHERE created_by = '$user_id'";
-$event_result = mysqli_query($connection, $event_query);
-$total_events = mysqli_fetch_assoc($event_result)['total_events'] ?? 0;
+$event_stmt = $connection->prepare("SELECT COUNT(*) AS total_events FROM events WHERE created_by = ?");
+$event_stmt->bind_param("i", $user_id);
+$event_stmt->execute();
+$event_result = $event_stmt->get_result();
+$total_events = $event_result->fetch_assoc()['total_events'] ?? 0;
 ?>
 
 <!DOCTYPE html>

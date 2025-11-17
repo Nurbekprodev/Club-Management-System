@@ -7,8 +7,14 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'clubadmin') {
 }
 
 include '../includes/database.php';
+include '../includes/functions.php';
 
 if (isset($_POST['create_club'])) {
+    // Verify CSRF token
+    if (!isset($_POST['csrf_token']) || !verifyCSRFToken($_POST['csrf_token'])) {
+        die("CSRF token validation failed.");
+    }
+    
     $club_name = $_POST['club_name'];
     $description = $_POST['description'];
     $category = $_POST['category'];
@@ -21,8 +27,21 @@ if (isset($_POST['create_club'])) {
     // Handle file upload
     $logo = null;
     if (!empty($_FILES['logo']['name'])) {
-        $logo = '../includes/images/' . basename($_FILES['logo']['name']);
-        move_uploaded_file($_FILES['logo']['tmp_name'], $logo);
+        $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        $max_size = 5000000; // 5MB
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime = finfo_file($finfo, $_FILES['logo']['tmp_name']);
+        finfo_close($finfo);
+        
+        if (in_array($mime, $allowed_types) && $_FILES['logo']['size'] <= $max_size) {
+            $file_extension = pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION);
+            $safe_filename = bin2hex(random_bytes(8)) . '.' . $file_extension;
+            $logo = '../includes/images/' . $safe_filename;
+            move_uploaded_file($_FILES['logo']['tmp_name'], $logo);
+        } else {
+            echo "<script>alert('Invalid file type or file too large (max 5MB)');</script>";
+            exit();
+        }
     }
 
     $stmt = $connection->prepare("INSERT INTO clubs 
@@ -63,6 +82,8 @@ if (isset($_POST['create_club'])) {
 <?php endif; ?>
 
 <form action="create_club.php" method="POST" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+    
     <label>Club Name:</label>
     <input type="text" name="club_name" required>
 

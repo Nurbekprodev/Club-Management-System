@@ -1,6 +1,7 @@
 <?php
 session_start();
 include "../includes/database.php";
+include "../includes/functions.php";
 
 if (!isset($_GET['id'])) {
     die("Club not found.");
@@ -49,6 +50,11 @@ if ($member_id && $role === "member") {
 // JOIN CLUB
 // =====================
 if (isset($_POST['join_club']) && $member_id && $role === "member") {
+    // Verify CSRF token
+    if (!isset($_POST['csrf_token']) || !verifyCSRFToken($_POST['csrf_token'])) {
+        die("CSRF token validation failed.");
+    }
+    
     $join = $connection->prepare("INSERT INTO club_members (club_id, user_id, status, joined_at) VALUES (?, ?, 'pending', NOW())");
     $join->bind_param("ii", $club_id, $member_id);
     $join->execute();
@@ -60,6 +66,11 @@ if (isset($_POST['join_club']) && $member_id && $role === "member") {
 // LEAVE CLUB
 // =====================
 if (isset($_POST['leave_club']) && $membership_status === "approved") {
+    // Verify CSRF token
+    if (!isset($_POST['csrf_token']) || !verifyCSRFToken($_POST['csrf_token'])) {
+        die("CSRF token validation failed.");
+    }
+    
     $leave = $connection->prepare("DELETE FROM club_members WHERE id=?");
     $leave->bind_param("i", $membership_id);
     $leave->execute();
@@ -72,9 +83,19 @@ if (isset($_POST['leave_club']) && $membership_status === "approved") {
 // REGISTER EVENT
 // =====================
 if (isset($_POST['register_event_id']) && $member_id && $role === "member") {
+    // Verify CSRF token
+    if (!isset($_POST['csrf_token']) || !verifyCSRFToken($_POST['csrf_token'])) {
+        die("CSRF token validation failed.");
+    }
+    
+    // Check if user is an approved member of this club
+    if ($membership_status !== "approved") {
+        die("You must be an approved member of this club to register for events.");
+    }
+    
     $eid = intval($_POST['register_event_id']);
 
-    // Check duplicate
+    // Check duplicate registration
     $check = $connection->prepare("SELECT id FROM event_registrations WHERE event_id=? AND member_id=?");
     $check->bind_param("ii", $eid, $member_id);
     $check->execute();
@@ -91,6 +112,11 @@ if (isset($_POST['register_event_id']) && $member_id && $role === "member") {
 // LEAVE EVENT
 // =====================
 if (isset($_POST['leave_event_id']) && $member_id && $role === "member") {
+    // Verify CSRF token
+    if (!isset($_POST['csrf_token']) || !verifyCSRFToken($_POST['csrf_token'])) {
+        die("CSRF token validation failed.");
+    }
+    
     $eid = intval($_POST['leave_event_id']);
 
     $del = $connection->prepare("DELETE FROM event_registrations WHERE event_id=? AND member_id=?");
@@ -163,6 +189,7 @@ $events = $ev->get_result();
         <p style="color:green"><b>You are a member of this club.</b></p>
 
         <form method="POST">
+            <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
             <button type="submit" name="leave_club" style="background:red; color:white">Leave Club</button>
         </form>
 
@@ -171,6 +198,7 @@ $events = $ev->get_result();
 
     <?php else: ?>
         <form method="POST">
+            <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
             <button type="submit" name="join_club" style="background:green; color:white">Join Club</button>
         </form>
     <?php endif; ?>
@@ -213,14 +241,20 @@ $events = $ev->get_result();
             <!-- REGISTER / LEAVE BUTTON -->
             <?php if ($registered): ?>
                 <form method="POST">
+                    <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                     <input type="hidden" name="leave_event_id" value="<?= $event_id ?>">
                     <button style="background:red; color:white; padding:6px 12px; border:none;">Leave Event</button>
                 </form>
-            <?php else: ?>
+            <?php elseif ($member_id && $role === "member" && $membership_status === "approved"): ?>
                 <form method="POST">
+                    <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                     <input type="hidden" name="register_event_id" value="<?= $event_id ?>">
                     <button style="background:green; color:white; padding:6px 12px; border:none;">Register</button>
                 </form>
+            <?php elseif (!$member_id || $role !== "member"): ?>
+                <p style="color:orange;">Login to register for events.</p>
+            <?php else: ?>
+                <p style="color:orange;">You must be an approved member to register for events.</p>
             <?php endif; ?>
 
         </div>

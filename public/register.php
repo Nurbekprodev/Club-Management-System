@@ -1,4 +1,5 @@
 <?php
+session_start();
 include '../includes/database.php';
 include '../includes/functions.php';
 
@@ -11,6 +12,11 @@ $errors = [
 ];
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Verify CSRF token
+    if (!isset($_POST['csrf_token']) || !verifyCSRFToken($_POST['csrf_token'])) {
+        die("CSRF token validation failed.");
+    }
+    
     $name = trim($_POST['name']);
     $email = trim($_POST['email']);
     $password = trim($_POST['password']);
@@ -25,17 +31,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (!array_filter($errors)) {
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-        // check email
-        $check = "SELECT * FROM users WHERE email = '$email'";
-        $result = mysqli_query($connection, $check);
+        // check email using prepared statement
+        $check_stmt = $connection->prepare("SELECT * FROM users WHERE email = ?");
+        $check_stmt->bind_param("s", $email);
+        $check_stmt->execute();
+        $result = $check_stmt->get_result();
 
-        if (mysqli_num_rows($result) > 0) {
+        if ($result->num_rows > 0) {
             $errors["email"] = "This email is already registered.";
         } else {
-            // insert user
-            $sql = "INSERT INTO users (name, email, password, role)
-                    VALUES ('$name', '$email', '$hashed_password', '$role')";
-            if (mysqli_query($connection, $sql)) {
+            // insert user using prepared statement
+            $insert_stmt = $connection->prepare("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)");
+            $insert_stmt->bind_param("ssss", $name, $email, $hashed_password, $role);
+            if ($insert_stmt->execute()) {
                 $success = "Registration successful! You can now log in.";
                 $name = $email = $password = "";
             }
@@ -55,6 +63,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <h2>Register</h2>
 
     <form action="" method="POST">
+        <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+        
         <label>Full Name:</label><br>
         <input type="text" name="name" value="<?php echo htmlspecialchars($name); ?>"><br>
         <small style="color:red;"><?php echo $errors["name"]; ?></small><br><br>

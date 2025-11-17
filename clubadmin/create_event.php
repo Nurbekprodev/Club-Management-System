@@ -7,11 +7,17 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'clubadmin') {
 }
 
 include '../includes/database.php';
+include '../includes/functions.php';
 
 $admin_id = $_SESSION['user_id'];
 
 // Handle form submission
 if (isset($_POST['create_event'])) {
+    // Verify CSRF token
+    if (!isset($_POST['csrf_token']) || !verifyCSRFToken($_POST['csrf_token'])) {
+        die("CSRF token validation failed.");
+    }
+    
     $club_id = intval($_POST['club_id']);
     $title = trim($_POST['title']);
     $description = trim($_POST['description']);
@@ -24,13 +30,29 @@ if (isset($_POST['create_event'])) {
 
     // Handle image upload
     if (!empty($_FILES['event_image']['name'])) {
+        $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        $max_size = 5000000; // 5MB
         $target_dir = "../includes/images/";
+        
         if (!is_dir($target_dir)) {
             mkdir($target_dir, 0777, true);
         }
-        $target_file = $target_dir . basename($_FILES['event_image']['name']);
-        if (move_uploaded_file($_FILES['event_image']['tmp_name'], $target_file)) {
-            $event_image = $target_file;
+        
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime = finfo_file($finfo, $_FILES['event_image']['tmp_name']);
+        finfo_close($finfo);
+        
+        if (in_array($mime, $allowed_types) && $_FILES['event_image']['size'] <= $max_size) {
+            $file_extension = pathinfo($_FILES['event_image']['name'], PATHINFO_EXTENSION);
+            $safe_filename = bin2hex(random_bytes(8)) . '.' . $file_extension;
+            $event_image = $target_dir . $safe_filename;
+            if (!move_uploaded_file($_FILES['event_image']['tmp_name'], $event_image)) {
+                echo "<script>alert('Failed to upload image');</script>";
+                exit();
+            }
+        } else {
+            echo "<script>alert('Invalid file type or file too large (max 5MB)');</script>";
+            exit();
         }
     }
 
@@ -88,6 +110,8 @@ $clubList = $clubs->get_result();
 <a href="manage_events.php">← Back to Events</a>
 
 <form action="create_event.php" method="POST" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+    
     <label>Club:</label>
     <select name="club_id" required>
         <option value="">Select Club</option>
