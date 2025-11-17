@@ -91,6 +91,7 @@ $events = $stmt->get_result();
                 <?php endif; ?>
             </td>
             <td>
+    <a href="view_event.php?id=<?= $row['id'] ?>">View</a> |
     <a href="edit_event.php?id=<?= $row['id'] ?>" class="edit-btn">Edit</a> |
     <a href="manage_events.php?delete=<?= $row['id'] ?>" class="delete-btn"
        onclick="return confirm('Are you sure you want to delete this event?');">Delete</a>
