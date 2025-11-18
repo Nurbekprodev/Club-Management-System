@@ -8,8 +8,19 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'clubadmin') {
 
 include '../includes/database.php';
 include '../includes/functions.php';
+include '../includes/header.php';
 
 $admin_id = $_SESSION['user_id'];
+
+// Initialize form values
+$club_id = $_POST['club_id'] ?? '';
+$title = $_POST['title'] ?? '';
+$description = $_POST['description'] ?? '';
+$date = $_POST['date'] ?? '';
+$event_time = $_POST['event_time'] ?? '';
+$venue = $_POST['venue'] ?? '';
+$registration_deadline = $_POST['registration_deadline'] ?? '';
+$max_participants = $_POST['max_participants'] ?? '';
 
 // Handle form submission
 if (isset($_POST['create_event'])) {
@@ -18,40 +29,52 @@ if (isset($_POST['create_event'])) {
         die("CSRF token validation failed.");
     }
     
-    $club_id = intval($_POST['club_id']);
-    $title = trim($_POST['title']);
-    $description = trim($_POST['description']);
-    $date = $_POST['date'];
-    $event_time = $_POST['event_time'];
-    $venue = trim($_POST['venue']);
-    $registration_deadline = $_POST['registration_deadline'];
-    $max_participants = intval($_POST['max_participants']);
+    $club_id = intval($club_id);
+    $title = sanitizeInput($title);
+    $description = sanitizeInput($description);
+    $date = $date;
+    $event_time = $event_time;
+    $venue = sanitizeInput($venue);
+    $registration_deadline = $registration_deadline;
+    $max_participants = intval($max_participants);
+
+    // Validate inputs
+    $title_error = validateEventTitle($title);
+    $date_error = validateEventDate($date);
+    $time_error = validateEventTime($event_time);
+    $venue_error = validateVenue($venue);
+    $max_error = validateMaxParticipants($max_participants);
+    $deadline_error = validateRegistrationDeadline($registration_deadline, $date);
+    
+    if (!empty($title_error) || !empty($date_error) || !empty($time_error) || !empty($venue_error) || !empty($max_error) || !empty($deadline_error)) {
+        setError($title_error ?: ($date_error ?: ($time_error ?: ($venue_error ?: ($max_error ?: $deadline_error)))));
+        header("Location: create_event.php");
+        exit();
+    }
+
     $event_image = null;
 
     // Handle image upload
     if (!empty($_FILES['event_image']['name'])) {
-        $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-        $max_size = 5000000; // 5MB
+        $upload_error = validateImageUpload($_FILES['event_image']);
+        if (!empty($upload_error)) {
+            setError($upload_error);
+            header("Location: create_event.php");
+            exit();
+        }
+        
         $target_dir = "../includes/images/";
         
         if (!is_dir($target_dir)) {
             mkdir($target_dir, 0777, true);
         }
         
-        $finfo = finfo_open(FILEINFO_MIME_TYPE);
-        $mime = finfo_file($finfo, $_FILES['event_image']['tmp_name']);
-        finfo_close($finfo);
-        
-        if (in_array($mime, $allowed_types) && $_FILES['event_image']['size'] <= $max_size) {
-            $file_extension = pathinfo($_FILES['event_image']['name'], PATHINFO_EXTENSION);
-            $safe_filename = bin2hex(random_bytes(8)) . '.' . $file_extension;
-            $event_image = $target_dir . $safe_filename;
-            if (!move_uploaded_file($_FILES['event_image']['tmp_name'], $event_image)) {
-                echo "<script>alert('Failed to upload image');</script>";
-                exit();
-            }
-        } else {
-            echo "<script>alert('Invalid file type or file too large (max 5MB)');</script>";
+        $file_extension = pathinfo($_FILES['event_image']['name'], PATHINFO_EXTENSION);
+        $safe_filename = bin2hex(random_bytes(8)) . '.' . $file_extension;
+        $event_image = $target_dir . $safe_filename;
+        if (!move_uploaded_file($_FILES['event_image']['tmp_name'], $event_image)) {
+            setError("Failed to upload image");
+            header("Location: create_event.php");
             exit();
         }
     }
@@ -77,10 +100,11 @@ if (isset($_POST['create_event'])) {
     );
 
     if ($stmt->execute()) {
-        echo "<script>alert('Event created successfully!'); window.location='manage_events.php';</script>";
-        exit();
+        redirectWithMessage("manage_events.php", "Event created successfully!");
     } else {
-        echo "<script>alert('Error creating event: " . $stmt->error . "');</script>";
+        setError("Error creating event. Please try again.");
+        header("Location: create_event.php");
+        exit();
     }
 }
 
@@ -91,61 +115,81 @@ $clubs->execute();
 $clubList = $clubs->get_result();
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Create Event</title>
-<style>
-    body { font-family: Arial; margin: 40px; background: #f7f7f7; }
-    form { background: #fff; padding: 20px; width: 450px; border: 1px solid #ccc; border-radius: 8px; }
-    input, textarea, select { width: 100%; margin-bottom: 10px; padding: 8px; }
-    button { padding: 10px 16px; background: #4CAF50; color: white; border: none; cursor: pointer; }
-    a { text-decoration: none; color: #4CAF50; }
-</style>
-</head>
-<body>
+<main>
+<div class="container mt-4">
+    <div style="max-width: 600px; margin: 0 auto;">
+        <a href="manage_events.php" class="btn btn-ghost mb-3">← Back to Events</a>
+        
+        <div class="card">
+            <div class="card-header">Create New Event</div>
+            <div class="card-body">
+                <?php displayMessages(); ?>
 
-<h2>Create Event</h2>
-<a href="manage_events.php">← Back to Events</a>
+                <form action="create_event.php" method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                    
+                    <div class="form-group">
+                        <label for="club_id">Club</label>
+                        <select id="club_id" name="club_id" class="form-control" required>
+                            <option value="">Select Club</option>
+                            <?php 
+                            $clubList->data_seek(0);
+                            while ($c = $clubList->fetch_assoc()): 
+                            ?>
+                                <option value="<?= $c['id'] ?>" <?= $club_id == $c['id'] ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($c['name']) ?>
+                                </option>
+                            <?php endwhile; ?>
+                        </select>
+                    </div>
 
-<form action="create_event.php" method="POST" enctype="multipart/form-data">
-    <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
-    
-    <label>Club:</label>
-    <select name="club_id" required>
-        <option value="">Select Club</option>
-        <?php while ($c = $clubList->fetch_assoc()): ?>
-            <option value="<?= $c['id'] ?>"><?= htmlspecialchars($c['name']) ?></option>
-        <?php endwhile; ?>
-    </select>
+                    <div class="form-group">
+                        <label for="title">Title</label>
+                        <input type="text" id="title" name="title" class="form-control" value="<?php echo htmlspecialchars($title); ?>" required>
+                    </div>
 
-    <label>Title:</label>
-    <input type="text" name="title" required>
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea id="description" name="description" class="form-control" rows="4" required><?php echo htmlspecialchars($description); ?></textarea>
+                    </div>
 
-    <label>Description:</label>
-    <textarea name="description" required></textarea>
+                    <div class="form-group">
+                        <label for="date">Date</label>
+                        <input type="date" id="date" name="date" class="form-control" value="<?php echo htmlspecialchars($date); ?>" required>
+                    </div>
 
-    <label>Date:</label>
-    <input type="date" name="date" required>
+                    <div class="form-group">
+                        <label for="event_time">Time</label>
+                        <input type="time" id="event_time" name="event_time" class="form-control" value="<?php echo htmlspecialchars($event_time); ?>" required>
+                    </div>
 
-    <label>Time:</label>
-    <input type="time" name="event_time" required>
+                    <div class="form-group">
+                        <label for="venue">Venue</label>
+                        <input type="text" id="venue" name="venue" class="form-control" value="<?php echo htmlspecialchars($venue); ?>" required>
+                    </div>
 
-    <label>Venue:</label>
-    <input type="text" name="venue" required>
+                    <div class="form-group">
+                        <label for="registration_deadline">Registration Deadline</label>
+                        <input type="date" id="registration_deadline" name="registration_deadline" class="form-control" value="<?php echo htmlspecialchars($registration_deadline); ?>" required>
+                    </div>
 
-    <label>Registration Deadline:</label>
-    <input type="date" name="registration_deadline" required>
+                    <div class="form-group">
+                        <label for="max_participants">Max Participants</label>
+                        <input type="number" id="max_participants" name="max_participants" class="form-control" value="<?php echo htmlspecialchars($max_participants); ?>" required min="1">
+                    </div>
 
-    <label>Max Participants:</label>
-    <input type="number" name="max_participants" required min="1">
+                    <div class="form-group">
+                        <label for="event_image">Event Image</label>
+                        <input type="file" id="event_image" name="event_image" class="form-control">
+                        <small class="text-muted">Max 5MB, PNG/JPG/GIF</small>
+                    </div>
 
-    <label>Event Image:</label>
-    <input type="file" name="event_image">
+                    <button type="submit" name="create_event" class="btn btn-primary" style="width: 100%;">Create Event</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</main>
 
-    <button type="submit" name="create_event">Create Event</button>
-</form>
-
-</body>
-</html>
+<?php include '../includes/footer.php'; ?>

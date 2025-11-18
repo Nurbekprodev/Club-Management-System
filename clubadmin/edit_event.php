@@ -7,6 +7,8 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'clubadmin') {
 }
 
 include '../includes/database.php';
+include '../includes/functions.php';
+include '../includes/header.php';
 
 $admin_id = $_SESSION['user_id'];
 
@@ -82,76 +84,91 @@ if (isset($_POST['update_event'])) {
     );
 
     if ($stmt->execute()) {
-        echo "<script>alert('Event updated successfully!'); window.location='manage_events.php';</script>";
-        exit();
+        redirectWithMessage("manage_events.php", "Event updated successfully!");
     } else {
-        echo "<script>alert('Error updating event: " . $stmt->error . "');</script>";
+        setError("Error updating event");
+        header("Location: edit_event.php?id=$event_id");
+        exit();
     }
 }
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Edit Event</title>
-<style>
-    body { font-family: Arial; margin: 40px; background: #f7f7f7; }
-    form { background: #fff; padding: 20px; width: 450px; border: 1px solid #ccc; border-radius: 8px; }
-    input, textarea, select { width: 100%; margin-bottom: 10px; padding: 8px; }
-    img { width: 100%; max-width: 200px; margin-bottom: 10px; border-radius: 8px; }
-    button { padding: 10px 16px; background: #4CAF50; color: white; border: none; cursor: pointer; }
-    a { text-decoration: none; color: #4CAF50; }
-</style>
-</head>
-<body>
+<main>
+<div class="container mt-4">
+    <div style="max-width: 600px; margin: 0 auto;">
+        <a href="manage_events.php" class="btn btn-ghost mb-3">← Back to Events</a>
 
-<h2>Edit Event</h2>
-<a href="manage_events.php">← Back to Events</a>
+        <div class="card">
+            <div class="card-header">Edit Event</div>
+            <div class="card-body">
+                <form action="edit_event.php?id=<?= $event_id ?>" method="POST" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="club_id">Club</label>
+                        <select id="club_id" name="club_id" class="form-control" required>
+                            <?php $clubList->data_seek(0); ?>
+                            <?php while ($c = $clubList->fetch_assoc()): ?>
+                                <option value="<?= $c['id'] ?>" <?= $c['id'] == $event['club_id'] ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($c['name']) ?>
+                                </option>
+                            <?php endwhile; ?>
+                        </select>
+                    </div>
 
-<form action="edit_event.php?id=<?= $event_id ?>" method="POST" enctype="multipart/form-data">
-    <label>Club:</label>
-    <select name="club_id" required>
-        <?php while ($c = $clubList->fetch_assoc()): ?>
-            <option value="<?= $c['id'] ?>" <?= $c['id'] == $event['club_id'] ? 'selected' : '' ?>>
-                <?= htmlspecialchars($c['name']) ?>
-            </option>
-        <?php endwhile; ?>
-    </select>
+                    <div class="form-group">
+                        <label for="title">Title</label>
+                        <input type="text" id="title" name="title" class="form-control" value="<?= htmlspecialchars($event['title']) ?>" required>
+                    </div>
 
-    <label>Title:</label>
-    <input type="text" name="title" value="<?= htmlspecialchars($event['title']) ?>" required>
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea id="description" name="description" class="form-control" rows="4" required><?= htmlspecialchars($event['description']) ?></textarea>
+                    </div>
 
-    <label>Description:</label>
-    <textarea name="description" required><?= htmlspecialchars($event['description']) ?></textarea>
+                    <div class="form-group">
+                        <label for="date">Date</label>
+                        <input type="date" id="date" name="date" class="form-control" value="<?= $event['date'] ?>" required>
+                    </div>
 
-    <label>Date:</label>
-    <input type="date" name="date" value="<?= $event['date'] ?>" required>
+                    <div class="form-group">
+                        <label for="event_time">Time</label>
+                        <input type="time" id="event_time" name="event_time" class="form-control" value="<?= $event['event_time'] ?>" required>
+                    </div>
 
-    <label>Time:</label>
-    <input type="time" name="event_time" value="<?= $event['event_time'] ?>" required>
+                    <div class="form-group">
+                        <label for="venue">Venue</label>
+                        <input type="text" id="venue" name="venue" class="form-control" value="<?= htmlspecialchars($event['venue']) ?>" required>
+                    </div>
 
-    <label>Venue:</label>
-    <input type="text" name="venue" value="<?= htmlspecialchars($event['venue']) ?>" required>
+                    <div class="form-group">
+                        <label for="registration_deadline">Registration Deadline</label>
+                        <input type="date" id="registration_deadline" name="registration_deadline" class="form-control" value="<?= $event['registration_deadline'] ?>" required>
+                    </div>
 
-    <label>Registration Deadline:</label>
-    <input type="date" name="registration_deadline" value="<?= $event['registration_deadline'] ?>" required>
+                    <div class="form-group">
+                        <label for="max_participants">Max Participants</label>
+                        <input type="number" id="max_participants" name="max_participants" class="form-control" value="<?= $event['max_participants'] ?>" required>
+                    </div>
 
-    <label>Max Participants:</label>
-    <input type="number" name="max_participants" value="<?= $event['max_participants'] ?>" required>
+                    <div class="form-group">
+                        <label>Current Image</label>
+                        <?php if ($event['event_image']): ?>
+                            <img src="<?= $event['event_image'] ?>" alt="Event Image" style="max-width: 200px; border-radius: 6px; margin-bottom: 12px;">
+                        <?php else: ?>
+                            <p class="text-muted">No image uploaded.</p>
+                        <?php endif; ?>
+                    </div>
 
-    <label>Current Image:</label><br>
-    <?php if ($event['event_image']): ?>
-        <img src="<?= $event['event_image'] ?>" alt="Event Image">
-    <?php else: ?>
-        <p>No image uploaded.</p>
-    <?php endif; ?>
+                    <div class="form-group">
+                        <label for="event_image">Change Image (optional)</label>
+                        <input type="file" id="event_image" name="event_image" class="form-control">
+                    </div>
 
-    <label>Change Image (optional):</label>
-    <input type="file" name="event_image">
+                    <button type="submit" name="update_event" class="btn btn-primary" style="width: 100%;">Update Event</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</main>
 
-    <button type="submit" name="update_event">Update Event</button>
-</form>
-
-</body>
-</html>
+<?php include '../includes/footer.php'; ?>

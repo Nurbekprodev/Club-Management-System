@@ -7,6 +7,8 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'clubadmin') {
 }
 
 include '../includes/database.php';
+include '../includes/functions.php';
+include '../includes/header.php';
 
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     header("Location: manage_clubs.php");
@@ -27,24 +29,64 @@ if (!$club) {
 }
 
 if (isset($_POST['update_club'])) {
-    $name = $_POST['name'];
-    $description = $_POST['description'];
-    $category = $_POST['category'];
-    $location = $_POST['location'];
-    $contact_email = $_POST['contact_email'];
-    $contact_phone = $_POST['contact_phone'];
-    $founded_year = $_POST['founded_year'];
+    $name = trim($_POST['name'] ?? '');
+    $description = trim($_POST['description'] ?? '');
+    $category = trim($_POST['category'] ?? '');
+    $location = trim($_POST['location'] ?? '');
+    $contact_email = trim($_POST['contact_email'] ?? '');
+    $contact_phone = trim($_POST['contact_phone'] ?? '');
+    $founded_year = intval($_POST['founded_year'] ?? 0);
+
+    // Validation
+    $errors = [];
+    if (empty($name) || strlen($name) < 3) $errors[] = "Club name must be at least 3 characters.";
+    if (empty($description) || strlen($description) < 10) $errors[] = "Description must be at least 10 characters.";
+    if (empty($contact_email) || !filter_var($contact_email, FILTER_VALIDATE_EMAIL)) $errors[] = "Valid email is required.";
+    if (!empty($contact_phone) && !preg_match('/^[0-9\-\+\(\)\s]+$/', $contact_phone)) $errors[] = "Invalid phone number.";
+    if ($founded_year && ($founded_year < 1900 || $founded_year > date('Y'))) $errors[] = "Founded year must be between 1900 and current year.";
+
+    if (!empty($errors)) {
+        foreach ($errors as $error) {
+            setError($error);
+        }
+        header("Location: edit_club.php?id=$club_id");
+        exit();
+    }
 
     // Handle Logo Upload
     $logo_path = $club['logo'];
 
     if (!empty($_FILES['logo']['name'])) {
+        $allowed_types = ['image/jpeg', 'image/png', 'image/gif'];
+        $max_size = 5 * 1024 * 1024; // 5MB
+
+        if (!in_array($_FILES['logo']['type'], $allowed_types)) {
+            setError("Only JPEG, PNG, and GIF files are allowed.");
+            header("Location: edit_club.php?id=$club_id");
+            exit();
+        }
+
+        if ($_FILES['logo']['size'] > $max_size) {
+            setError("File size must not exceed 5MB.");
+            header("Location: edit_club.php?id=$club_id");
+            exit();
+        }
+
         $target_dir = "../includes/images/";
-        $filename = time() . "_" . basename($_FILES["logo"]["name"]);
+        if (!is_dir($target_dir)) mkdir($target_dir, 0755, true);
+
+        $filename = time() . "_" . preg_replace('/[^a-zA-Z0-9._-]/', '', basename($_FILES["logo"]["name"]));
         $target_path = $target_dir . $filename;
 
         if (move_uploaded_file($_FILES["logo"]["tmp_name"], $target_path)) {
+            if (!empty($club['logo']) && file_exists($club['logo'])) {
+                unlink($club['logo']);
+            }
             $logo_path = $target_path;
+        } else {
+            setError("Error uploading logo file.");
+            header("Location: edit_club.php?id=$club_id");
+            exit();
         }
     }
 
@@ -63,84 +105,71 @@ if (isset($_POST['update_club'])) {
     );
 
     if ($update->execute()) {
-        echo "<script>alert('Club updated successfully'); window.location='manage_clubs.php';</script>";
+        redirectWithMessage("manage_clubs.php", "Club updated successfully!");
     } else {
-        echo "<script>alert('Error updating club');</script>";
+        setError("Error updating club");
+        header("Location: edit_club.php?id=$club_id");
+        exit();
     }
 }
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Edit Club</title>
-    <style>
-        body { font-family: Arial; background: #f4f6f9; padding: 40px; }
-        form {
-            width: 420px;
-            background: #fff;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0px 3px 8px rgba(0,0,0,0.1);
-        }
-        input, textarea {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 14px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        button {
-            background: #0066cc;
-            color: white;
-            border: none;
-            padding: 10px 16px;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        .back-link {
-            display: inline-block;
-            margin-top: 15px;
-            text-decoration: none;
-            color: #555;
-        }
-        h2 { margin-bottom: 20px; }
-    </style>
-</head>
-<body>
 
-<h2>Edit Club</h2>
+<main>
+<div class="container mt-4">
+    <div style="max-width: 500px; margin: 0 auto;">
+        <a href="manage_clubs.php" class="btn btn-ghost mb-3">← Back</a>
+        
+        <div class="card">
+            <div class="card-header">Edit Club</div>
+            <div class="card-body">
+                <?php displayMessages(); ?>
 
-<form method="POST" enctype="multipart/form-data">
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="name">Club Name</label>
+                        <input type="text" id="name" name="name" class="form-control" value="<?= htmlspecialchars($club['name']) ?>" required>
+                    </div>
 
-    <label>Club Name:</label>
-    <input type="text" name="name" required value="<?= htmlspecialchars($club['name']) ?>">
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea id="description" name="description" class="form-control" rows="4" required><?= htmlspecialchars($club['description']) ?></textarea>
+                    </div>
 
-    <label>Description:</label>
-    <textarea name="description" rows="4" required><?= htmlspecialchars($club['description']) ?></textarea>
+                    <div class="form-group">
+                        <label for="category">Category</label>
+                        <input type="text" id="category" name="category" class="form-control" value="<?= htmlspecialchars($club['category']) ?>">
+                    </div>
 
-    <label>Category:</label>
-    <input type="text" name="category" value="<?= htmlspecialchars($club['category']) ?>">
+                    <div class="form-group">
+                        <label for="location">Location</label>
+                        <input type="text" id="location" name="location" class="form-control" value="<?= htmlspecialchars($club['location']) ?>">
+                    </div>
 
-    <label>Location:</label>
-    <input type="text" name="location" value="<?= htmlspecialchars($club['location']) ?>">
+                    <div class="form-group">
+                        <label for="contact_email">Contact Email</label>
+                        <input type="email" id="contact_email" name="contact_email" class="form-control" value="<?= htmlspecialchars($club['contact_email']) ?>" required>
+                    </div>
 
-    <label>Contact Email:</label>
-    <input type="email" name="contact_email" required value="<?= htmlspecialchars($club['contact_email']) ?>">
+                    <div class="form-group">
+                        <label for="contact_phone">Contact Phone</label>
+                        <input type="text" id="contact_phone" name="contact_phone" class="form-control" value="<?= htmlspecialchars($club['contact_phone']) ?>">
+                    </div>
 
-    <label>Contact Phone:</label>
-    <input type="text" name="contact_phone" value="<?= htmlspecialchars($club['contact_phone']) ?>">
+                    <div class="form-group">
+                        <label for="founded_year">Founded Year</label>
+                        <input type="number" id="founded_year" name="founded_year" class="form-control" min="1900" max="<?= date('Y') ?>" value="<?= htmlspecialchars($club['founded_year']) ?>">
+                    </div>
 
-    <label>Founded Year:</label>
-    <input type="number" name="founded_year" min="1900" max="2099" value="<?= htmlspecialchars($club['founded_year']) ?>">
+                    <div class="form-group">
+                        <label for="logo">Club Logo</label>
+                        <?php if (!empty($club['logo']) && file_exists($club['logo'])): ?>
+                            <div style="margin-bottom: 10px;">
+                                <img src="<?= htmlspecialchars($club['logo']) ?>" alt="Club Logo" style="max-width: 150px; border-radius: 4px;">
+                                <small class="text-muted d-block">Current Logo</small>
+                            </div>
+                        <?php endif; ?>
+                        <input type="file" id="logo" name="logo" class="form-control" accept="image/*">
+                        <small class="text-muted">Leave blank to keep current logo. Max 5MB (JPEG, PNG, GIF)</small>
+                    </div>
 
-    <label>Club Logo:</label>
-    <input type="file" name="logo">
-
-    <button type="submit" name="update_club">Update Club</button>
-</form>
-
-<a href="manage_clubs.php" class="back-link">← Back to Clubs</a>
-
-</body>
-</html>
+                    <button type="submit" name="update_club" class="btn btn-primary" style="width: 100%;

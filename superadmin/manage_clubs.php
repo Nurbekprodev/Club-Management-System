@@ -1,108 +1,80 @@
 <?php
 session_start();
 
-// Allow only superadmins
-if (!isset($_SESSION['role']) || $_SESSION['role'] != 'superadmin') {
-    header("Location: ../public/login.php");
-    exit();
-}
-
 include '../includes/database.php';
+include '../includes/functions.php';
+include '../includes/header.php';
+
+redirectIfNotSuperadmin();
 
 // Handle delete request
-if (isset($_GET['delete'])) {
-    $club_id = $_GET['delete'];
-    $delete = "DELETE FROM clubs WHERE id='$club_id'";
-    mysqli_query($connection, $delete);
-    header("Location: manage_clubs.php?success=deleted");
-    exit();
+if (isset($_POST['delete_club_id'])) {
+    // Verify CSRF token
+    if (!isset($_POST['csrf_token']) || !verifyCSRFToken($_POST['csrf_token'])) {
+        die("CSRF token validation failed.");
+    }
+    
+    $club_id = intval($_POST['delete_club_id']);
+    if (deleteById($connection, "clubs", $club_id)) {
+        redirectWithMessage("manage_clubs.php", "Club deleted successfully!");
+    } else {
+        redirectWithMessage("manage_clubs.php", "Error deleting club.", true);
+    }
 }
 
-// Fetch all clubs with creator info
-$query = "SELECT clubs.*, users.name AS admin_name 
-          FROM clubs 
-          JOIN users ON clubs.created_by = users.id 
-          ORDER BY clubs.id DESC";
-$result = mysqli_query($connection, $query);
+$query = $connection->prepare("SELECT clubs.*, users.name AS admin_name FROM clubs JOIN users ON clubs.created_by = users.id ORDER BY clubs.id DESC");
+$query->execute();
+$result = $query->get_result();
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Manage All Clubs</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            background-color: #f7f7f7;
-        }
-        h2 {
-            color: #333;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: #fff;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: left;
-        }
-        th {
-            background: #eee;
-        }
-        a {
-            color: #007bff;
-            text-decoration: none;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
-        .message {
-            padding: 10px;
-            margin-bottom: 15px;
-            background: #d4edda;
-            color: #155724;
-            border-radius: 5px;
-        }
-    </style>
-</head>
-<body>
+<main>
+<div class="container mt-4">
 
-<h2>All Clubs (Superadmin View)</h2>
+<div class="d-flex justify-between items-center mb-4">
+  <h2>All Clubs (Superadmin View)</h2>
+  <a href="dashboard.php" class="btn btn-ghost">← Back to Dashboard</a>
+</div>
 
-<?php if (isset($_GET['success'])): ?>
-    <div class="message">Club deleted successfully!</div>
+<?php displayMessages(); ?>
+
+<?php if ($result->num_rows > 0): ?>
+    <div class="card">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Club Name</th>
+            <th>Description</th>
+            <th>Created By</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php while ($row = $result->fetch_assoc()): ?>
+            <tr>
+              <td><?= $row['id'] ?></td>
+              <td><strong><?= htmlspecialchars($row['name']) ?></strong></td>
+              <td><?= htmlspecialchars(substr($row['description'], 0, 60)) ?>...</td>
+              <td><?= htmlspecialchars($row['admin_name']) ?></td>
+              <td>
+                <form method="POST" style="display:inline;">
+                    <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                    <input type="hidden" name="delete_club_id" value="<?= $row['id'] ?>">
+                    <button type="submit" onclick="return confirm('Delete this club?')" class="btn btn-outline" style="padding: 4px 8px; font-size: 12px; color: #dc3545;">Delete</button>
+                </form>
+              </td>
+            </tr>
+          <?php endwhile; ?>
+        </tbody>
+      </table>
+    </div>
+<?php else: ?>
+  <div class="card text-center text-muted">
+    <p>No clubs found.</p>
+  </div>
 <?php endif; ?>
 
-<table>
-    <tr>
-        <th>ID</th>
-        <th>Club Name</th>
-        <th>Description</th>
-        <th>Created By</th>
-        <th>Actions</th>
-    </tr>
+</div>
+</main>
 
-    <?php if (mysqli_num_rows($result) > 0): ?>
-        <?php while ($row = mysqli_fetch_assoc($result)): ?>
-            <tr>
-                <td><?= $row['id'] ?></td>
-                <td><?= htmlspecialchars($row['name']) ?></td>
-                <td><?= htmlspecialchars($row['description']) ?></td>
-                <td><?= htmlspecialchars($row['admin_name']) ?></td>
-                <td>
-                    <a href="manage_clubs.php?delete=<?= $row['id'] ?>" onclick="return confirm('Delete this club?')">Delete</a>
-                </td>
-            </tr>
-        <?php endwhile; ?>
-    <?php else: ?>
-        <tr><td colspan="5">No clubs found.</td></tr>
-    <?php endif; ?>
-</table>
-<p><a href="dashboard.php">Back to Dashboard</a></p>
-</body>
-</html>
+<?php include '../includes/footer.php'; ?>

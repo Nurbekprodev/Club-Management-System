@@ -1,99 +1,67 @@
 <?php
 session_start();
-
-// Only superadmin access
-if (!isset($_SESSION['role']) || $_SESSION['role'] != 'superadmin') {
-    header("Location: ../public/login.php");
-    exit();
-}
-
 include '../includes/database.php';
+include '../includes/functions.php';
+include '../includes/header.php';
 
-// Fetch basic counts
-$total_users_query = mysqli_query($connection, "SELECT COUNT(*) AS total FROM users");
-$total_users = mysqli_fetch_assoc($total_users_query)['total'];
+redirectIfNotSuperadmin();
 
-$total_clubs_query = mysqli_query($connection, "SELECT COUNT(*) AS total FROM clubs");
-$total_clubs = mysqli_fetch_assoc($total_clubs_query)['total'];
-
-$pending_requests_query = mysqli_query($connection, "SELECT COUNT(*) AS total FROM role_requests WHERE status = 'pending'");
-$pending_requests = mysqli_fetch_assoc($pending_requests_query)['total'];
+// Fetch basic counts using prepared statements
+$total_users = countRows($connection, "users");
+$total_clubs = countRows($connection, "clubs");
+$pending_requests = countRows($connection, "role_requests", "status = 'pending'");
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Superadmin Dashboard</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f7f7f7;
-            margin: 40px;
-        }
-        h2 {
-            color: #333;
-        }
-        .dashboard {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-        .card {
-            background: #fff;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            width: 200px;
-            text-align: center;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .card h3 {
-            margin: 10px 0;
-            color: #555;
-        }
-        .card p {
-            font-size: 24px;
-            color: #007bff;
-        }
-        .links {
-            margin-top: 30px;
-        }
-        .links a {
-            margin-right: 20px;
-            text-decoration: none;
-            color: #007bff;
-        }
-        .links a:hover {
-            text-decoration: underline;
-        }
-    </style>
-</head>
-<body>
+<main>
+    <div class="container mt-4">
+        <h2>Dashboard</h2>
+        <p class="text-muted mb-4">System overview and key metrics</p>
 
-<h2>Welcome, Superadmin</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
+            <div class="card">
+                <div class="card-header">Total Users</div>
+                <div class="card-body" style="text-align: center;">
+                    <p style="font-size: 28px; font-weight: 700; color: var(--color-primary);"><?= $total_users ?></p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">Total Clubs</div>
+                <div class="card-body" style="text-align: center;">
+                    <p style="font-size: 28px; font-weight: 700; color: var(--color-primary);"><?= $total_clubs ?></p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">Pending Role Requests</div>
+                <div class="card-body" style="text-align: center;">
+                    <p style="font-size: 28px; font-weight: 700; color: var(--color-primary);"><?= $pending_requests ?></p>
+                </div>
+            </div>
+        </div>
 
-<div class="dashboard">
-    <div class="card">
-        <h3>Total Users</h3>
-        <p><?= $total_users ?></p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+            <div class="card">
+                <div class="card-header">Manage Clubs</div>
+                <div class="card-body">
+                    <p class="text-muted">View, edit, and delete all clubs in the system.</p>
+                    <a href="manage_clubs.php" class="btn btn-primary" style="display: block; text-align: center;">Go to Clubs</a>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">Manage Users</div>
+                <div class="card-body">
+                    <p class="text-muted">Manage user roles and permissions.</p>
+                    <a href="manage_users.php" class="btn btn-primary" style="display: block; text-align: center;">Go to Users</a>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">Role Requests</div>
+                <div class="card-body">
+                    <p class="text-muted">Review and approve pending role requests.</p>
+                    <a href="role_requests.php" class="btn btn-primary" style="display: block; text-align: center;">View Requests</a>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="card">
-        <h3>Total Clubs</h3>
-        <p><?= $total_clubs ?></p>
-    </div>
-    <div class="card">
-        <h3>Pending Role Requests</h3>
-        <p><?= $pending_requests ?></p>
-    </div>
-</div>
+</main>
 
-<div class="links">
-    <a href="manage_clubs.php">Manage Clubs</a>
-    <a href="manage_users.php">Manage Users</a>
-    <a href="role_requests.php">View Role Requests</a>
-    <a href="../public/logout.php">Logout</a>
-</div>
-
-</body>
-</html>
+<?php include '../includes/footer.php'; ?>

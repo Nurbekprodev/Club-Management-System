@@ -7,6 +7,8 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'clubadmin') {
 }
 
 include '../includes/database.php';
+include '../includes/functions.php';
+include '../includes/header.php';
 
 $user_id = $_SESSION['user_id'];
 
@@ -29,48 +31,56 @@ if ($result->num_rows === 0) {
 $club = $result->fetch_assoc();
 ?>
 
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>View Club</title>
-<style>
-    body { font-family: Arial; background: #f4f6f9; padding: 40px; }
-    .container {
-        background: #fff; padding: 25px; width: 500px;
-        margin: auto; border-radius: 8px;
-        box-shadow: 0px 3px 8px rgba(0,0,0,0.1);
-    }
-    h2 { margin-bottom: 15px; }
-    .row { margin-bottom: 10px; }
-    .label { font-weight: bold; color: #333; }
-    .value { color: #555; }
-    img { max-width: 120px; margin-top: 10px; border-radius: 6px; }
-    a.btn { display: inline-block; padding: 8px 14px; background: #0066cc;
-        color: #fff; text-decoration: none; border-radius: 5px; margin-top: 15px; }
-</style>
-</head>
+<main>
+<div class="container mt-4">
+    <div style="max-width: 600px; margin: 0 auto;">
+        <a href="manage_clubs.php" class="btn btn-ghost mb-3">← Back</a>
 
-<body>
+        <div class="card">
+            <div class="card-header">Club Details</div>
+            <div class="card-body">
+                <?php if (!empty($club['logo'])): ?>
+                    <img src="<?= $club['logo'] ?>" alt="Club Logo" style="width: 100%; max-width: 400px; border-radius: 8px; margin-bottom: 20px; object-fit: cover;">
+                <?php endif; ?>
 
-<div class="container">
-    <h2>Club Details</h2>
+                <div class="mb-3">
+                    <strong>Name:</strong>
+                    <p class="text-muted"><?= htmlspecialchars($club['name']) ?></p>
+                </div>
 
-    <div class="row"><span class="label">Name:</span> <span class="value"><?= htmlspecialchars($club['name']) ?></span></div>
-    <div class="row"><span class="label">Description:</span> <span class="value"><?= htmlspecialchars($club['description']) ?></span></div>
-    <div class="row"><span class="label">Category:</span> <span class="value"><?= htmlspecialchars($club['category']) ?></span></div>
-    <div class="row"><span class="label">Location:</span> <span class="value"><?= htmlspecialchars($club['location']) ?></span></div>
-    <div class="row"><span class="label">Email:</span> <span class="value"><?= htmlspecialchars($club['contact_email']) ?></span></div>
-    <div class="row"><span class="label">Phone:</span> <span class="value"><?= htmlspecialchars($club['contact_phone']) ?></span></div>
-    <div class="row"><span class="label">Founded Year:</span> <span class="value"><?= htmlspecialchars($club['founded_year']) ?></span></div>
+                <div class="mb-3">
+                    <strong>Description:</strong>
+                    <p class="text-muted"><?= htmlspecialchars($club['description']) ?></p>
+                </div>
 
-    <?php if (!empty($club['logo'])): ?>
-        <div class="row"><span class="label">Logo:</span><br>
-        <img src="<?= $club['logo'] ?>" alt="Club Logo"></div>
-    <?php endif; ?>
+                <div class="mb-3">
+                    <strong>Category:</strong>
+                    <p class="text-muted"><?= htmlspecialchars($club['category']) ?></p>
+                </div>
 
-    <a href="manage_clubs.php" class="btn">← Back</a>
+                <div class="mb-3">
+                    <strong>Location:</strong>
+                    <p class="text-muted"><?= htmlspecialchars($club['location']) ?></p>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Email:</strong>
+                    <p class="text-muted"><?= htmlspecialchars($club['contact_email']) ?></p>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Phone:</strong>
+                    <p class="text-muted"><?= htmlspecialchars($club['contact_phone']) ?></p>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Founded Year:</strong>
+                    <p class="text-muted"><?= htmlspecialchars($club['founded_year']) ?></p>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+</main>
 
-</body>
-</html>
+<?php include '../includes/footer.php'; ?>

@@ -1,6 +1,8 @@
 <?php
 session_start();
 include "../includes/database.php";
+include "../includes/functions.php";
+include "../includes/header.php";
 
 // Determine if user is logged in as member
 $isMember = isset($_SESSION['user_id']) && $_SESSION['role'] === 'member';
@@ -72,58 +74,43 @@ if ($isMember) {
     }
 }
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<title>All Clubs</title>
-<style>
-body { font-family: Arial; margin: 40px; background:#f7f7f7; }
-.club-card { border:1px solid #ccc; background:#fff; padding:12px; margin-bottom:12px; border-radius:5px; }
-button, .btn { padding:8px 12px; cursor:pointer; border:none; border-radius:4px; }
-.btn-primary { background:#4CAF50; color:#fff; }
-.btn-secondary { background:#008CBA; color:#fff; }
-button[disabled] { background:#ccc; cursor:not-allowed; }
-.success { color:green; }
-.error { color:red; }
-.pagination a { padding:8px 12px; margin:4px; background:#ddd; border-radius:4px; text-decoration:none; }
-.pagination a.active { background:#4CAF50; color:white; }
-a.button { display:inline-block; margin-bottom:12px; padding:8px 12px; background:#4CAF50; color:#fff; text-decoration:none; border-radius:4px; }
-</style>
-</head>
-<body>
 
-<h2>All Clubs</h2>
-<a href="dashboard.php" class="button">Back to Dashboard</a>
+<main>
+<div class="container mt-4">
 
-<?php if (!empty($success_message)): ?><p class="success"><?= htmlspecialchars($success_message) ?></p><?php endif; ?>
-<?php if (!empty($error_message)): ?><p class="error"><?= htmlspecialchars($error_message) ?></p><?php endif; ?>
+<div class="d-flex justify-between items-center mb-4">
+  <h2>All Clubs</h2>
+  <a href="dashboard.php" class="btn btn-ghost">← Back to Dashboard</a>
+</div>
+
+<?php displayMessages(); ?>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
 
 <?php while($club = mysqli_fetch_assoc($clubsResult)): ?>
-<div class="club-card">
+<div class="card">
 
     <?php if (!empty($club['logo'])): ?>
-        <img src="<?= htmlspecialchars($club['logo']) ?>" width="80" height="80"><br>
+        <img src="<?= htmlspecialchars($club['logo']) ?>" alt="Club logo" class="card-img-top mb-3" style="height: 180px; object-fit: cover;">
     <?php endif; ?>
 
-    <h3><?= htmlspecialchars($club['name']) ?></h3>
-    <p><?= htmlspecialchars($club['description']) ?></p>
-    <p><strong>Category:</strong> <?= htmlspecialchars($club['category']) ?></p>
+    <h3 class="card-header"><?= htmlspecialchars($club['name']) ?></h3>
+    <p class="text-muted mb-3"><?= htmlspecialchars($club['description']) ?></p>
+    <p><strong>Category:</strong> <span class="badge badge-success"><?= htmlspecialchars($club['category']) ?></span></p>
 
-    <!-- View Details -->
-    <a href="club_details.php?id=<?= $club['id'] ?>" class="btn btn-secondary">View Details</a>
+    <div class="mt-3">
+      <a href="club_details.php?id=<?= $club['id'] ?>" class="btn btn-outline mb-2">View Details</a>
 
-    <!-- Join Button Logic -->
-    <?php if ($isMember): ?>
+      <!-- Join Button Logic -->
+      <?php if ($isMember): ?>
         <?php
         $cid = $club['id'];
         if (isset($club_status[$cid])) {
             $st = $club_status[$cid];
-
             if ($st === 'approved') {
-                echo "<button disabled>Member</button>";
+                echo "<button disabled class='btn' style='background:#ccc; cursor:not-allowed;'>✓ Member</button>";
             } elseif ($st === 'pending') {
-                echo "<button disabled>Request Pending</button>";
+                echo "<button disabled class='btn' style='background:#ff9800; cursor:not-allowed; color:white;'>⏳ Request Pending</button>";
             } else {
                 echo "<form method='POST' style='display:inline;'>
                         <input type='hidden' name='club_id' value='$cid'>
@@ -137,27 +124,29 @@ a.button { display:inline-block; margin-bottom:12px; padding:8px 12px; backgroun
                   </form>";
         }
         ?>
-    <?php else: ?>
+      <?php else: ?>
         <a href="../public/login.php" class="btn btn-primary">Login to Join</a>
-    <?php endif; ?>
-
+      <?php endif; ?>
+    </div>
 </div>
 <?php endwhile; ?>
 
-<!-- Pagination -->
-<div class="pagination">
-    <?php if ($page > 1): ?>
-        <a href="?page=<?= $page - 1 ?>">Previous</a>
-    <?php endif; ?>
-
-    <?php for ($i=1; $i <= $totalPages; $i++): ?>
-        <a class="<?= ($i == $page) ? 'active' : '' ?>" href="?page=<?= $i ?>"><?= $i ?></a>
-    <?php endfor; ?>
-
-    <?php if ($page < $totalPages): ?>
-        <a href="?page=<?= $page + 1 ?>">Next</a>
-    <?php endif; ?>
 </div>
 
-</body>
-</html>
+<!-- Pagination -->
+<div class="mt-4" style="display: flex; gap: 8px;">
+  <?php if ($page > 1): ?>
+    <a href="?page=<?= $page - 1 ?>" class="btn btn-outline">← Previous</a>
+  <?php endif; ?>
+
+  <div style="flex: 1;"></div>
+
+  <?php if ($page < $totalPages): ?>
+    <a href="?page=<?= $page + 1 ?>" class="btn btn-outline">Next →</a>
+  <?php endif; ?>
+</div>
+
+</div>
+</main>
+
+<?php include '../includes/footer.php'; ?>

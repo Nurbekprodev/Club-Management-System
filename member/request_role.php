@@ -1,6 +1,8 @@
 <?php
 session_start();
 include '../includes/database.php';
+include '../includes/functions.php';
+include '../includes/header.php';
 
 // check if user is logged in and is a member
 if (!isset($_SESSION['role']) || $_SESSION['role'] != 'member') {
@@ -33,33 +35,41 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Request Role Upgrade | Club Management</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
-</head>
-<body>
-    <h2>Request Role Upgrade</h2>
+<main>
+<div class="container mt-4">
 
+<div class="d-flex justify-between items-center mb-4">
+  <h2>Request Role Upgrade</h2>
+  <a href="dashboard.php" class="btn btn-ghost">← Back to Dashboard</a>
+</div>
+
+<div class="card" style="max-width: 500px; margin: 0 auto;">
     <?php if ($success): ?>
-        <p style="color:green;"><?php echo $success; ?></p>
+        <div style="background:#d4edda; color:#155724; padding:12px; border-radius:6px; margin-bottom:16px;">
+            <?php echo $success; ?>
+        </div>
     <?php endif; ?>
 
     <?php if ($error): ?>
-        <p style="color:red;"><?php echo $error; ?></p>
+        <div style="background:#f8d7da; color:#721c24; padding:12px; border-radius:6px; margin-bottom:16px;">
+            <?php echo $error; ?>
+        </div>
     <?php endif; ?>
 
     <form method="POST" action="">
-        <label>Select Role to Request:</label><br>
-        <select name="requested_role" required>
-            <option value="clubadmin">Club Admin</option>
-            <option value="superadmin">Super Admin</option>
-        </select><br><br>
-        <button type="submit">Submit Request</button>
+        <div class="form-group">
+            <label><strong>Select Role to Request:</strong></label>
+            <select name="requested_role" class="form-control" required>
+                <option value="">-- Choose a role --</option>
+                <option value="clubadmin">Club Admin</option>
+                <option value="superadmin">Super Admin</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 10px;">Submit Request</button>
     </form>
+</div>
 
-    <p><a href="dashboard.php">Back to Dashboard</a></p>
-</body>
-</html>
+</div>
+</main>
+
+<?php include '../includes/footer.php'; ?>

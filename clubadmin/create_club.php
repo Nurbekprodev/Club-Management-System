@@ -1,13 +1,20 @@
 <?php
 session_start();
 
-if (!isset($_SESSION['role']) || $_SESSION['role'] != 'clubadmin') {
-    header("Location: ../public/login.php");
-    exit();
-}
-
 include '../includes/database.php';
 include '../includes/functions.php';
+include '../includes/header.php';
+
+redirectIfNotAdmin();
+
+// Initialize form values
+$club_name = $_POST['club_name'] ?? '';
+$description = $_POST['description'] ?? '';
+$category = $_POST['category'] ?? '';
+$location = $_POST['location'] ?? '';
+$contact_email = $_POST['contact_email'] ?? '';
+$contact_phone = $_POST['contact_phone'] ?? '';
+$founded_year = $_POST['founded_year'] ?? '';
 
 if (isset($_POST['create_club'])) {
     // Verify CSRF token
@@ -15,33 +22,40 @@ if (isset($_POST['create_club'])) {
         die("CSRF token validation failed.");
     }
     
-    $club_name = $_POST['club_name'];
-    $description = $_POST['description'];
-    $category = $_POST['category'];
-    $location = $_POST['location'];
-    $contact_email = $_POST['contact_email'];
-    $contact_phone = $_POST['contact_phone'];
-    $founded_year = $_POST['founded_year'];
+    $club_name = sanitizeInput($club_name);
+    $description = sanitizeInput($description);
+    $category = sanitizeInput($category);
+    $location = sanitizeInput($location);
+    $contact_email = sanitizeInput($contact_email);
+    $contact_phone = sanitizeInput($contact_phone);
+    $founded_year = intval($founded_year ?? 0);
     $created_by = $_SESSION['user_id'];
+
+    // Validate inputs
+    $name_error = validateClubName($club_name);
+    $desc_error = validateDescription($description);
+    $cat_error = validateCategory($category);
+    
+    if (!empty($name_error) || !empty($desc_error) || !empty($cat_error)) {
+        setError($name_error ?: ($desc_error ?: $cat_error));
+        header("Location: create_club.php");
+        exit();
+    }
 
     // Handle file upload
     $logo = null;
     if (!empty($_FILES['logo']['name'])) {
-        $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-        $max_size = 5000000; // 5MB
-        $finfo = finfo_open(FILEINFO_MIME_TYPE);
-        $mime = finfo_file($finfo, $_FILES['logo']['tmp_name']);
-        finfo_close($finfo);
-        
-        if (in_array($mime, $allowed_types) && $_FILES['logo']['size'] <= $max_size) {
-            $file_extension = pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION);
-            $safe_filename = bin2hex(random_bytes(8)) . '.' . $file_extension;
-            $logo = '../includes/images/' . $safe_filename;
-            move_uploaded_file($_FILES['logo']['tmp_name'], $logo);
-        } else {
-            echo "<script>alert('Invalid file type or file too large (max 5MB)');</script>";
+        $upload_error = validateImageUpload($_FILES['logo']);
+        if (!empty($upload_error)) {
+            setError($upload_error);
+            header("Location: create_club.php");
             exit();
         }
+        
+        $file_extension = pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION);
+        $safe_filename = bin2hex(random_bytes(8)) . '.' . $file_extension;
+        $logo = '../includes/images/' . $safe_filename;
+        move_uploaded_file($_FILES['logo']['tmp_name'], $logo);
     }
 
     $stmt = $connection->prepare("INSERT INTO clubs 
@@ -51,66 +65,76 @@ if (isset($_POST['create_club'])) {
     $stmt->bind_param("ssssssssi", $club_name, $description, $category, $location, $contact_email, $contact_phone, $logo, $founded_year, $created_by);
 
     if ($stmt->execute()) {
-        echo "<script>alert('Club created successfully'); window.location='manage_clubs.php';</script>";
+        redirectWithMessage("manage_clubs.php", "Club created successfully!");
     } else {
-        echo "<script>alert('Error creating club');</script>";
+        setError("Error creating club. Please try again.");
+        header("Location: create_club.php");
+        exit();
     }
 }
 
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Create Club</title>
-    <style>
-        body { font-family: Arial; margin: 40px; background: #f7f7f7; }
-        form { background: #fff; padding: 20px; width: 400px; border: 1px solid #ccc; }
-        input, textarea { width: 100%; margin-bottom: 10px; padding: 8px; }
-        button { padding: 8px 16px; cursor: pointer; }
-        .error { color: red; }
-    </style>
-</head>
-<body>
+<main>
+<div class="container mt-4">
+    <div style="max-width: 500px; margin: 0 auto;">
+        <a href="manage_clubs.php" class="btn btn-ghost mb-3">← Back</a>
+        
+        <div class="card">
+            <div class="card-header">Create New Club</div>
+            <div class="card-body">
+                <?php displayMessages(); ?>
 
-<h2>Create Club</h2>
-<a href="manage_clubs.php" style="text-decoration:none;">← Back to Clubs</a>
+                <form action="" method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
 
-<?php if (isset($error)): ?>
-    <p class="error"><?= $error ?></p>
-<?php endif; ?>
+                    <div class="form-group">
+                        <label for="club_name" style="display:block; margin-bottom: 6px; font-weight: 600;">Club Name</label>
+                        <input type="text" id="club_name" name="club_name" class="form-control" value="<?php echo htmlspecialchars($club_name); ?>" required>
+                    </div>
 
-<form action="create_club.php" method="POST" enctype="multipart/form-data">
-    <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
-    
-    <label>Club Name:</label>
-    <input type="text" name="club_name" required>
+                    <div class="form-group">
+                        <label for="description" style="display:block; margin-bottom: 6px; font-weight: 600;">Description</label>
+                        <textarea id="description" name="description" class="form-control" rows="4" required><?php echo htmlspecialchars($description); ?></textarea>
+                    </div>
 
-    <label>Description:</label>
-    <textarea name="description" required></textarea>
+                    <div class="form-group">
+                        <label for="category" style="display:block; margin-bottom: 6px; font-weight: 600;">Category</label>
+                        <input type="text" id="category" name="category" class="form-control" value="<?php echo htmlspecialchars($category); ?>" placeholder="e.g., Sports, Arts, Tech" required>
+                    </div>
 
-    <label>Category:</label>
-    <input type="text" name="category" placeholder="e.g., Sports, Coding, Music">
+                    <div class="form-group">
+                        <label for="location" style="display:block; margin-bottom: 6px; font-weight: 600;">Location</label>
+                        <input type="text" id="location" name="location" class="form-control" value="<?php echo htmlspecialchars($location); ?>" required>
+                    </div>
 
-    <label>Location:</label>
-    <input type="text" name="location" placeholder="Campus / City">
+                    <div class="form-group">
+                        <label for="contact_email" style="display:block; margin-bottom: 6px; font-weight: 600;">Contact Email</label>
+                        <input type="email" id="contact_email" name="contact_email" class="form-control" value="<?php echo htmlspecialchars($contact_email); ?>" required>
+                    </div>
 
-    <label>Contact Email:</label>
-    <input type="email" name="contact_email" required>
+                    <div class="form-group">
+                        <label for="contact_phone" style="display:block; margin-bottom: 6px; font-weight: 600;">Contact Phone</label>
+                        <input type="tel" id="contact_phone" name="contact_phone" class="form-control" value="<?php echo htmlspecialchars($contact_phone); ?>" required>
+                    </div>
 
-    <label>Contact Phone:</label>
-    <input type="text" name="contact_phone">
+                    <div class="form-group">
+                        <label for="founded_year" style="display:block; margin-bottom: 6px; font-weight: 600;">Founded Year</label>
+                        <input type="number" id="founded_year" name="founded_year" class="form-control" value="<?php echo htmlspecialchars($founded_year); ?>" min="1900" max="<?php echo date('Y'); ?>">
+                    </div>
 
-    <label>Founded Year:</label>
-    <input type="number" name="founded_year" min="1900" max="2099">
+                    <div class="form-group">
+                        <label for="logo" style="display:block; margin-bottom: 6px; font-weight: 600;">Club Logo</label>
+                        <input type="file" id="logo" name="logo" class="form-control" accept="image/*">
+                        <small class="text-muted">Max 5MB, PNG/JPG/GIF</small>
+                    </div>
 
-    <label>Club Logo:</label>
-    <input type="file" name="logo">
+                    <button type="submit" name="create_club" class="btn btn-primary" style="width: 100%; margin-top: 12px;">Create Club</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</main>
 
-    <button type="submit" name="create_club">Create Club</button>
-</form>
-
-
-</body>
-</html>
+<?php include '../includes/footer.php'; ?>

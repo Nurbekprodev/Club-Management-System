@@ -1,6 +1,8 @@
 <?php
 session_start();
 include "../includes/database.php";
+include "../includes/functions.php";
+include "../includes/header.php";
 
 // Only members can access
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'member') {
@@ -25,59 +27,51 @@ $stmt->execute();
 $res = $stmt->get_result();
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<title>My Clubs</title>
-<style>
-body { font-family: Arial; margin: 40px; background:#f7f7f7; }
-.club-card { border:1px solid #ccc; background:#fff; padding:12px; margin-bottom:12px; border-radius:5px; }
-button, .btn { padding:8px 12px; cursor:pointer; border:none; border-radius:4px; }
-.btn-secondary { background:#008CBA; color:#fff; }
-.status-tag { padding:5px 9px; border-radius:4px; font-size:13px; }
-.status-approved { background:#4CAF50; color:#fff; }
-.status-pending { background:#ff9800; color:#fff; }
-a.button { display:inline-block; margin-bottom:12px; padding:8px 12px; background:#4CAF50; color:#fff; text-decoration:none; border-radius:4px; }
-</style>
-</head>
+<main>
+<div class="container mt-4">
 
-<body>
-
-<h2>My Clubs</h2>
-<a href="dashboard.php" class="button">← Back to Dashboard</a>
+<div class="d-flex justify-between items-center mb-4">
+  <h2>My Clubs</h2>
+  <a href="dashboard.php" class="btn btn-ghost">← Back to Dashboard</a>
+</div>
 
 <?php if ($res->num_rows === 0): ?>
-    <p>You have not joined any clubs yet.</p>
+    <div class="card">
+      <p class="text-muted text-center">You have not joined any clubs yet. <a href="clubs.php">Browse clubs →</a></p>
+    </div>
 <?php else: ?>
 
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+
     <?php while($club = $res->fetch_assoc()): ?>
-        <div class="club-card">
+        <div class="card">
 
             <?php if (!empty($club['logo'])): ?>
-                <img src="<?= htmlspecialchars($club['logo']) ?>" width="80" height="80"><br>
+                <img src="<?= htmlspecialchars($club['logo']) ?>" alt="Club logo" class="card-img-top mb-3" style="height: 180px; object-fit: cover;">
             <?php endif; ?>
 
-            <h3><?= htmlspecialchars($club['name']) ?></h3>
-            <p><?= htmlspecialchars($club['description']) ?></p>
-            <p><strong>Category:</strong> <?= htmlspecialchars($club['category']) ?></p>
+            <h3 class="card-header"><?= htmlspecialchars($club['name']) ?></h3>
+            <p class="text-muted mb-3"><?= htmlspecialchars($club['description']) ?></p>
+            <p><strong>Category:</strong> <span class="badge badge-success"><?= htmlspecialchars($club['category']) ?></span></p>
 
             <!-- Status -->
-            <?php if ($club['status'] === 'approved'): ?>
-                <span class="status-tag status-approved">Member</span>
-            <?php else: ?>
-                <span class="status-tag status-pending">Pending Approval</span>
-            <?php endif; ?>
+            <div class="mt-3 mb-3">
+              <?php if ($club['status'] === 'approved'): ?>
+                <span class="badge badge-success">✓ Member</span>
+              <?php else: ?>
+                <span class="badge badge-warning">⏳ Pending Approval</span>
+              <?php endif; ?>
+            </div>
 
-            <br><br>
-
-            <!-- View Details -->
-            <a href="club_details.php?id=<?= $club['id'] ?>" class="btn btn-secondary">View Details</a>
-
+            <a href="club_details.php?id=<?= $club['id'] ?>" class="btn btn-primary">View Details</a>
         </div>
     <?php endwhile; ?>
 
+</div>
+
 <?php endif; ?>
 
-</body>
-</html>
+</div>
+</main>
+
+<?php include '../includes/footer.php'; ?>

@@ -2,14 +2,9 @@
 session_start();
 include '../includes/database.php';
 include '../includes/functions.php';
+include '../includes/header.php';
 
-$success = "";
 $name = $email = $password = "";
-$errors = [
-    "name" => "",
-    "email" => "",
-    "password" => ""
-];
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Verify CSRF token
@@ -23,12 +18,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $role = "member";
 
     // validate fields
-    $errors["name"] = validateName($name);
-    $errors["email"] = validateEmail($email);
-    $errors["password"] = validatePassword($password);
+    $name_error = validateName($name);
+    $email_error = validateEmail($email);
+    $password_error = validatePassword($password);
 
     // if no errors
-    if (!array_filter($errors)) {
+    if (empty($name_error) && empty($email_error) && empty($password_error)) {
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
         // check email using prepared statement
@@ -38,52 +33,60 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $result = $check_stmt->get_result();
 
         if ($result->num_rows > 0) {
-            $errors["email"] = "This email is already registered.";
+            setError("This email is already registered.");
         } else {
             // insert user using prepared statement
             $insert_stmt = $connection->prepare("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)");
             $insert_stmt->bind_param("ssss", $name, $email, $hashed_password, $role);
             if ($insert_stmt->execute()) {
-                $success = "Registration successful! You can now log in.";
+                setSuccess("Registration successful! You can now log in.");
                 $name = $email = $password = "";
+            } else {
+                setError("Registration failed. Please try again.");
             }
         }
+    } else {
+        if (!empty($name_error)) setError($name_error);
+        else if (!empty($email_error)) setError($email_error);
+        else if (!empty($password_error)) setError($password_error);
     }
 }
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Register | Club Management</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
-</head>
-<body>
-    <h2>Register</h2>
+<main>
+    <div class="container mt-4">
+        <div style="max-width: 400px; margin: 0 auto;">
+            <div class="card">
+                <div class="card-header mb-3">Create Account</div>
+                <div class="card-body">
+                    <?php displayMessages(); ?>
 
-    <form action="" method="POST">
-        <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
-        
-        <label>Full Name:</label><br>
-        <input type="text" name="name" value="<?php echo htmlspecialchars($name); ?>"><br>
-        <small style="color:red;"><?php echo $errors["name"]; ?></small><br><br>
+                    <form action="" method="POST">
+                        <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                        
+                        <div class="form-group">
+                            <label for="name" style="display:block; margin-bottom: 6px; font-weight: 600;">Full Name</label>
+                            <input type="text" id="name" name="name" class="form-control" value="<?php echo htmlspecialchars($name); ?>" required>
+                        </div>
 
-        <label>Email:</label><br>
-        <input type="email" name="email" value="<?php echo htmlspecialchars($email); ?>"><br>
-        <small style="color:red;"><?php echo $errors["email"]; ?></small><br><br>
+                        <div class="form-group">
+                            <label for="email" style="display:block; margin-bottom: 6px; font-weight: 600;">Email</label>
+                            <input type="email" id="email" name="email" class="form-control" value="<?php echo htmlspecialchars($email); ?>" required>
+                        </div>
 
-        <label>Password:</label><br>
-        <input type="password" name="password"><br>
-        <small style="color:red;"><?php echo $errors["password"]; ?></small><br><br>
+                        <div class="form-group">
+                            <label for="password" style="display:block; margin-bottom: 6px; font-weight: 600;">Password</label>
+                            <input type="password" id="password" name="password" class="form-control" required>
+                        </div>
 
-        <button type="submit">Register</button>
-    </form>
+                        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 12px;">Register</button>
+                    </form>
 
-    <?php if ($success): ?>
-        <p style="color:green;"><?php echo $success; ?></p>
-    <?php endif; ?>
+                    <p class="text-center mt-3">Already have an account? <a href="login.php" style="font-weight: 600;">Login</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
 
-    <p>Already have an account? <a href="login.php">Login</a></p>
-</body>
-</html>
+<?php include '../includes/footer.php'; ?>

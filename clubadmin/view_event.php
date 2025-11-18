@@ -7,6 +7,8 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'clubadmin') {
 }
 
 include '../includes/database.php';
+include '../includes/functions.php';
+include '../includes/header.php';
 
 $user_id = $_SESSION['user_id'];
 
@@ -34,48 +36,61 @@ if ($result->num_rows === 0) {
 $event = $result->fetch_assoc();
 ?>
 
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>View Event</title>
-<style>
-    body { font-family: Arial; background: #f4f6f9; padding: 40px; }
-    .container {
-        background: #fff; padding: 25px; width: 500px;
-        margin: auto; border-radius: 8px;
-        box-shadow: 0px 3px 8px rgba(0,0,0,0.1);
-    }
-    h2 { margin-bottom: 15px; }
-    .row { margin-bottom: 10px; }
-    .label { font-weight: bold; color: #333; }
-    .value { color: #555; }
-    img { max-width: 140px; margin-top: 10px; border-radius: 6px; }
-    a.btn { display: inline-block; padding: 8px 14px; background: #0066cc;
-        color: #fff; text-decoration: none; border-radius: 5px; margin-top: 15px; }
-</style>
-</head>
+<main>
+<div class="container mt-4">
+    <div style="max-width: 600px; margin: 0 auto;">
+        <a href="manage_events.php" class="btn btn-ghost mb-3">← Back</a>
 
-<body>
+        <div class="card">
+            <div class="card-header">Event Details</div>
+            <div class="card-body">
+                <?php if (!empty($event['event_image'])): ?>
+                    <img src="<?= htmlspecialchars($event['event_image']) ?>" alt="Event image" style="width: 100%; max-width: 400px; border-radius: 8px; margin-bottom: 15px;">
+                <?php endif; ?>
 
-<div class="container">
-    <h2>Event Details</h2>
+                <div class="mb-3">
+                    <strong>Title:</strong>
+                    <p class="text-muted"><?= htmlspecialchars($event['title']) ?></p>
+                </div>
 
-    <div class="row"><span class="label">Title:</span> <span class="value"><?= htmlspecialchars($event['title']) ?></span></div>
-    <div class="row"><span class="label">Club:</span> <span class="value"><?= htmlspecialchars($event['club_name']) ?></span></div>
-    <div class="row"><span class="label">Description:</span> <span class="value"><?= htmlspecialchars($event['description']) ?></span></div>
-    <div class="row"><span class="label">Date:</span> <span class="value"><?= htmlspecialchars($event['created_at']) ?></span></div>
-    <div class="row"><span class="label">Time:</span> <span class="value"><?= htmlspecialchars($event['event_time']) ?></span></div>
-    <div class="row"><span class="label">Location:</span> <span class="value"><?= htmlspecialchars($event['venue']) ?></span></div>
+                <div class="mb-3">
+                    <strong>Club:</strong>
+                    <p class="text-muted"><?= htmlspecialchars($event['club_name']) ?></p>
+                </div>
 
-    <?php if (!empty($event['image'])): ?>
-        <div class="row"><span class="label">Image:</span><br>
-            <img src="<?= $event['image'] ?>" alt="Event image">
+                <div class="mb-3">
+                    <strong>Description:</strong>
+                    <p class="text-muted"><?= htmlspecialchars($event['description']) ?></p>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Date:</strong>
+                    <p class="text-muted"><?= htmlspecialchars($event['date']) ?></p>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Time:</strong>
+                    <p class="text-muted"><?= htmlspecialchars($event['event_time']) ?></p>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Venue:</strong>
+                    <p class="text-muted"><?= htmlspecialchars($event['venue']) ?></p>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Registration Deadline:</strong>
+                    <p class="text-muted"><?= htmlspecialchars($event['registration_deadline']) ?></p>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Max Participants:</strong>
+                    <p class="text-muted"><?= htmlspecialchars($event['max_participants']) ?></p>
+                </div>
+            </div>
         </div>
-    <?php endif; ?>
-
-    <a href="manage_events.php" class="btn">← Back</a>
+    </div>
 </div>
+</main>
 
-</body>
-</html>
+<?php include '../includes/footer.php'; ?>

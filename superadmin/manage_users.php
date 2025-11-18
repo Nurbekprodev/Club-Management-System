@@ -1,65 +1,114 @@
 <?php
 session_start();
-if (!isset($_SESSION['role']) || $_SESSION['role'] != 'superadmin') {
-    header("Location: ../public/login.php");
-    exit();
-}
 
 include '../includes/database.php';
+include '../includes/functions.php';
+include '../includes/header.php';
+
+redirectIfNotSuperadmin();
+
+$valid_roles = ['member', 'clubadmin', 'superadmin'];
 
 // Handle role update
 if (isset($_POST['update_role'])) {
-    $user_id = $_POST['user_id'];
+    // Verify CSRF token
+    if (!isset($_POST['csrf_token']) || !verifyCSRFToken($_POST['csrf_token'])) {
+        die("CSRF token validation failed.");
+    }
+    
+    $user_id = intval($_POST['user_id']);
     $new_role = $_POST['role'];
-    $query = "UPDATE users SET role = '$new_role' WHERE id = '$user_id'";
-    mysqli_query($connection, $query);
+    
+    // Validate role input
+    $role_error = validateRole($new_role);
+    if (!empty($role_error)) {
+        setError($role_error);
+    } else {
+        $stmt = $connection->prepare("UPDATE users SET role = ? WHERE id = ?");
+        $stmt->bind_param("si", $new_role, $user_id);
+        if ($stmt->execute()) {
+            setSuccess("User role updated successfully.");
+        } else {
+            setError("Error updating user role.");
+        }
+    }
 }
 
 // Handle delete
-if (isset($_GET['delete'])) {
-    $delete_id = $_GET['delete'];
-    mysqli_query($connection, "DELETE FROM users WHERE id = '$delete_id'");
-    header("Location: manage_users.php");
-    exit();
+if (isset($_POST['delete_user_id'])) {
+    // Verify CSRF token
+    if (!isset($_POST['csrf_token']) || !verifyCSRFToken($_POST['csrf_token'])) {
+        die("CSRF token validation failed.");
+    }
+    
+    $delete_id = intval($_POST['delete_user_id']);
+    if (deleteById($connection, "users", $delete_id)) {
+        redirectWithMessage("manage_users.php", "User deleted successfully!");
+    } else {
+        redirectWithMessage("manage_users.php", "Error deleting user.", true);
+    }
 }
 
 // Fetch users
-$result = mysqli_query($connection, "SELECT * FROM users ORDER BY id DESC");
+$query = $connection->prepare("SELECT * FROM users ORDER BY id DESC");
+$query->execute();
+$result = $query->get_result();
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Manage Users</title>
-    <style>
-        body {
-            font-family: Arial;
-            background: #f5f5f5;
-            margin: 30px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: left;
-        }
-        th {
-            background: #eee;
-        }
-        form {
-            display: inline;
-        }
-        button {
-            cursor: pointer;
-            padding: 5px 10px;
-        }
-        a {
-            color: red;
+<main>
+<div class="container mt-4">
+
+<div class="d-flex justify-between items-center mb-4">
+  <h2>Manage Users</h2>
+  <a href="dashboard.php" class="btn btn-ghost">← Back to Dashboard</a>
+</div>
+
+<?php displayMessages(); ?>
+
+<?php if ($result->num_rows > 0): ?>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Role</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <?php while ($row = $result->fetch_assoc()): ?>
+      <tr>
+        <td><?= $row['id'] ?></td>
+        <td><?= htmlspecialchars($row['name']) ?></td>
+        <td><?= htmlspecialchars($row['email']) ?></td>
+        <td><?= htmlspecialchars($row['role']) ?></td>
+        <td>
+            <form method="POST" style="display:inline;">
+                <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                <input type="hidden" name="user_id" value="<?= $row['id'] ?>">
+                <select name="role" class="form-control" style="display:inline; width: auto;">
+                    <option value="member" <?php echo $row['role'] === 'member' ? 'selected' : ''; ?>>Member</option>
+                    <option value="clubadmin" <?php echo $row['role'] === 'clubadmin' ? 'selected' : ''; ?>>Club Admin</option>
+                    <option value="superadmin" <?php echo $row['role'] === 'superadmin' ? 'selected' : ''; ?>>Superadmin</option>
+                </select>
+                <button type="submit" name="update_role" class="btn btn-outline" style="display:inline; margin-left: 8px;">Update</button>
+            </form>
+            <form method="POST" style="display:inline; margin-left: 8px;">
+                <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                <input type="hidden" name="delete_user_id" value="<?= $row['id'] ?>">
+                <button type="submit" onclick="return confirm('Delete this user?')" class="btn btn-outline" style="color: var(--danger);">Delete</button>
+            </form>
+        </td>
+      </tr>
+      <?php endwhile; ?>
+    </tbody>
+  </table>
+<?php else: ?>
+  <div class="card text-center text-muted">
+    <p>No users found.</p>
+  </div>
+<?php endif; ?>
             text-decoration: none;
         }
     </style>
@@ -67,6 +116,8 @@ $result = mysqli_query($connection, "SELECT * FROM users ORDER BY id DESC");
 <body>
 
 <h2>Manage Users</h2>
+
+<?php displayMessages(); ?>
 
 <table>
     <tr>
@@ -77,16 +128,17 @@ $result = mysqli_query($connection, "SELECT * FROM users ORDER BY id DESC");
         <th>Action</th>
     </tr>
 
-    <?php while ($row = mysqli_fetch_assoc($result)): ?>
+    <?php while ($row = $result->fetch_assoc()): ?>
     <tr>
         <td><?= $row['id'] ?></td>
         <td><?= htmlspecialchars($row['name']) ?></td>
         <td><?= htmlspecialchars($row['email']) ?></td>
         <td>
-            <form method="POST" action="">
+            <form method="POST" action="" style="display:inline;">
+                <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                 <input type="hidden" name="user_id" value="<?= $row['id'] ?>">
                 <select name="role">
-                    <option value="student" <?= $row['role']=='student'?'selected':'' ?>>Student</option>
+                    <option value="member" <?= $row['role']=='member'?'selected':'' ?>>Member</option>
                     <option value="clubadmin" <?= $row['role']=='clubadmin'?'selected':'' ?>>Club Admin</option>
                     <option value="superadmin" <?= $row['role']=='superadmin'?'selected':'' ?>>Super Admin</option>
                 </select>
@@ -94,12 +146,17 @@ $result = mysqli_query($connection, "SELECT * FROM users ORDER BY id DESC");
             </form>
         </td>
         <td>
-            <a href="?delete=<?= $row['id'] ?>" onclick="return confirm('Delete this user?')">Delete</a>
+            <form method="POST" action="" style="display:inline;">
+                <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                <input type="hidden" name="delete_user_id" value="<?= $row['id'] ?>">
+                <button type="submit" onclick="return confirm('Delete this user?')" class="btn btn-outline" style="color: var(--danger);">Delete</button>
+            </form>
         </td>
     </tr>
     <?php endwhile; ?>
 </table>
-<p><a href="dashboard.php">Back to Dashboard</a></p>
 
-</body>
-</html>
+</div>
+</main>
+
+<?php include '../includes/footer.php'; ?>

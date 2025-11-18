@@ -2,13 +2,9 @@
 session_start();
 include '../includes/database.php';
 include '../includes/functions.php';
+include '../includes/header.php';
 
 $email = $password = "";
-$errors = [
-    "email" => "",
-    "password" => ""
-];
-$success = "";
 
 // check form submission
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -21,11 +17,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $password = trim($_POST['password']);
 
     // validate fields
-    $errors["email"] = validateEmail($email);
-    $errors["password"] = validatePassword($password);
+    $email_error = validateEmail($email);
+    $password_error = validatePassword($password);
 
     // if no errors
-    if (!array_filter($errors)) {
+    if (empty($email_error) && empty($password_error)) {
         $stmt = $connection->prepare("SELECT * FROM users WHERE email = ?");
         $stmt->bind_param("s", $email);
         $stmt->execute();
@@ -45,17 +41,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 // if club admin, fetch their clubs
                 if ($user['role'] == 'clubadmin') {
                     $user_id = $user['id'];
-                    $club_query = "SELECT id, name FROM clubs WHERE created_by = '$user_id'";
-                    $club_result = mysqli_query($connection, $club_query);
+                    $club_stmt = $connection->prepare("SELECT id, name FROM clubs WHERE created_by = ?");
+                    $club_stmt->bind_param("i", $user_id);
+                    $club_stmt->execute();
+                    $club_result = $club_stmt->get_result();
 
                     $clubs = [];
-                    while ($row = mysqli_fetch_assoc($club_result)) {
-                        $clubs[] = $row; // store id and name
+                    while ($row = $club_result->fetch_assoc()) {
+                        $clubs[] = $row;
                     }
                     $_SESSION['clubs'] = $clubs;
                 }
 
-                // redirect based on role
+                // Set success message and redirect based on role
+                setSuccess("Login successful!");
                 if ($user['role'] == 'superadmin') {
                     header("Location: ../superadmin/dashboard.php");
                 } elseif ($user['role'] == 'clubadmin') {
@@ -65,39 +64,47 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 }
                 exit();
             } else {
-                $errors["password"] = "Incorrect password.";
+                setError("Incorrect password.");
             }
         } else {
-            $errors["email"] = "Email not found.";
+            setError("Email not found.");
         }
+    } else {
+        if (!empty($email_error)) setError($email_error);
+        else if (!empty($password_error)) setError($password_error);
     }
 }
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Login | Club Management</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
-</head>
-<body>
-    <h2>Login</h2>
+<main>
+    <div class="container mt-4">
+        <div style="max-width: 400px; margin: 0 auto; ">
+            <div class="card">
+                <div class="card-header mb-3">Login</div>
+                <div class="card-body">
+                    <?php displayMessages(); ?>
 
-    <form action="" method="POST">
-        <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
-        
-        <label>Email:</label><br>
-        <input type="email" name="email" value="<?php echo htmlspecialchars($email); ?>"><br>
-        <small style="color:red;"><?php echo $errors["email"]; ?></small><br><br>
+                    <form action="" method="POST">
+                        <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                        
+                        <div class="form-group">
+                            <label for="email" style="display:block; margin-bottom: 6px; font-weight: 600;">Email</label>
+                            <input type="email" id="email" name="email" class="form-control" value="<?php echo htmlspecialchars($email); ?>" required>
+                        </div>
 
-        <label>Password:</label><br>
-        <input type="password" name="password"><br>
-        <small style="color:red;"><?php echo $errors["password"]; ?></small><br><br>
+                        <div class="form-group">
+                            <label for="password" style="display:block; margin-bottom: 6px; font-weight: 600;">Password</label>
+                            <input type="password" id="password" name="password" class="form-control" required>
+                        </div>
 
-        <button type="submit">Login</button>
-    </form>
+                        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 12px;">Login</button>
+                    </form>
 
-    <p>Don't have an account? <a href="register.php">Register</a></p>
-</body>
-</html>
+                    <p class="text-center mt-3">Don't have an account? <a href="register.php" style="font-weight: 600;">Register</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<?php include '../includes/footer.php'; ?>

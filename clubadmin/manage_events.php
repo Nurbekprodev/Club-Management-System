@@ -7,6 +7,8 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'clubadmin') {
 }
 
 include '../includes/database.php';
+include '../includes/functions.php';
+include '../includes/header.php';
 
 $admin_id = $_SESSION['user_id'];
 
@@ -16,10 +18,9 @@ if (isset($_GET['delete'])) {
     $del = $connection->prepare("DELETE FROM events WHERE id = ? AND created_by = ?");
     $del->bind_param("ii", $event_id, $admin_id);
     if ($del->execute()) {
-        echo "<script>alert('Event deleted successfully'); window.location='manage_events.php';</script>";
-        exit();
+        redirectWithMessage("manage_events.php", "Event deleted successfully!");
     } else {
-        echo "<script>alert('Error deleting event');</script>";
+        redirectWithMessage("manage_events.php", "Error deleting event.", true);
     }
 }
 
@@ -38,69 +39,55 @@ $stmt->execute();
 $events = $stmt->get_result();
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Manage Events</title>
-<style>
-    body { font-family: Arial; margin: 40px; background: #f9f9f9; }
-    table { border-collapse: collapse; width: 100%; background: #fff; }
-    th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
-    th { background: #f2f2f2; }
-    a.button { padding: 8px 12px; background: #4CAF50; color: white; text-decoration: none; border-radius: 4px; }
-    a.delete-btn { color: red; text-decoration: none; }
-    a.edit-btn { color: blue; text-decoration: none; }
-</style>
-</head>
-<body>
+<main>
+<div class="container mt-4">
 
-<h2>Manage Events</h2>
-<a href="dashboard.php" class="button">← Back to Dashboard</a>
-<a href="create_event.php" class="button">+ Add New Event</a>
-<br><br>
+<div class="d-flex justify-between items-center mb-4">
+  <h2>Manage Events</h2>
+  <div style="display: flex; gap: 8px;">
+    <a href="create_event.php" class="btn btn-primary">+ Add New Event</a>
+    <a href="dashboard.php" class="btn btn-ghost">← Back to Dashboard</a>
+  </div>
+</div>
 
 <?php if ($events->num_rows === 0): ?>
-    <p>No events found. <a href="create_event.php">Create one</a>.</p>
+    <div class="card text-center text-muted">
+      <p>No events found. <a href="create_event.php">Create one</a>.</p>
+    </div>
 <?php else: ?>
     <table>
+      <thead>
         <tr>
-            <th>Club</th>
-            <th>Title</th>
-            <th>Date</th>
-            <th>Venue</th>
-            <th>Deadline</th>
-            <th>Max Participants</th>
-            <th>Image</th>
-            <th>Actions</th>
+          <th>Club</th>
+          <th>Title</th>
+          <th>Date</th>
+          <th>Venue</th>
+          <th>Deadline</th>
+          <th>Max</th>
+          <th>Actions</th>
         </tr>
-
+      </thead>
+      <tbody>
         <?php while($row = $events->fetch_assoc()): ?>
         <tr>
-            <td><?= htmlspecialchars($row['club_name']) ?></td>
-            <td><?= htmlspecialchars($row['title']) ?></td>
-            <td><?= htmlspecialchars($row['date']) ?></td>
-            <td><?= htmlspecialchars($row['venue']) ?></td>
-            <td><?= htmlspecialchars($row['registration_deadline']) ?></td>
-            <td><?= htmlspecialchars($row['max_participants']) ?></td>
-            <td>
-                <?php if ($row['event_image']): ?>
-                    <img src="<?= htmlspecialchars($row['event_image']) ?>" alt="Event Image" width="60">
-                <?php else: ?>
-                    No image
-                <?php endif; ?>
-            </td>
-            <td>
-    <a href="view_event.php?id=<?= $row['id'] ?>">View</a> |
-    <a href="edit_event.php?id=<?= $row['id'] ?>" class="edit-btn">Edit</a> |
-    <a href="manage_events.php?delete=<?= $row['id'] ?>" class="delete-btn"
-       onclick="return confirm('Are you sure you want to delete this event?');">Delete</a>
-</td>
-
+          <td><?= htmlspecialchars($row['club_name']) ?></td>
+          <td><strong><?= htmlspecialchars($row['title']) ?></strong></td>
+          <td><?= htmlspecialchars($row['date']) ?></td>
+          <td><?= htmlspecialchars($row['venue']) ?></td>
+          <td><?= htmlspecialchars($row['registration_deadline']) ?></td>
+          <td><?= htmlspecialchars($row['max_participants']) ?></td>
+          <td>
+            <a href="view_event.php?id=<?= $row['id'] ?>" class="btn btn-outline" style="padding: 4px 8px; font-size: 12px;">View</a>
+            <a href="edit_event.php?id=<?= $row['id'] ?>" class="btn btn-outline" style="padding: 4px 8px; font-size: 12px;">Edit</a>
+            <a href="manage_events.php?delete=<?= $row['id'] ?>" class="btn btn-outline" style="padding: 4px 8px; font-size: 12px; color: #dc3545;" onclick="return confirm('Delete this event?');">Delete</a>
+          </td>
         </tr>
         <?php endwhile; ?>
+      </tbody>
     </table>
 <?php endif; ?>
 
-</body>
-</html>
+</div>
+</main>
+
+<?php include '../includes/footer.php'; ?>
