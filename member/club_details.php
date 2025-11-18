@@ -80,7 +80,7 @@ if (isset($_POST['leave_club']) && $membership_status === "approved") {
 }
 
 // =====================
-// REGISTER EVENT
+// REGISTER EVENT (Send Request)
 // =====================
 if (isset($_POST['register_event_id']) && $member_id && $role === "member") {
     // Verify CSRF token
@@ -95,16 +95,31 @@ if (isset($_POST['register_event_id']) && $member_id && $role === "member") {
     
     $eid = intval($_POST['register_event_id']);
 
-    // Check duplicate registration
-    $check = $connection->prepare("SELECT id FROM event_registrations WHERE event_id=? AND member_id=?");
+    // Check for existing registration
+    $check = $connection->prepare("SELECT id, status FROM event_registrations WHERE event_id=? AND member_id=?");
     $check->bind_param("ii", $eid, $member_id);
     $check->execute();
+    $existing = $check->get_result();
 
-    if ($check->get_result()->num_rows == 0) {
-        $reg = $connection->prepare("INSERT INTO event_registrations (event_id, member_id, registered_at) VALUES (?, ?, NOW())");
+    if ($existing->num_rows == 0) {
+        // New registration request with pending status
+        $reg = $connection->prepare("INSERT INTO event_registrations (event_id, member_id, status, registered_at) VALUES (?, ?, 'pending', NOW())");
         $reg->bind_param("ii", $eid, $member_id);
         $reg->execute();
-        $success = "Registered successfully!";
+        $success = "Event registration request sent! Waiting for approval.";
+    } else {
+        $row = $existing->fetch_assoc();
+        if ($row['status'] === 'pending') {
+            $success = "You already have a pending registration request.";
+        } elseif ($row['status'] === 'approved') {
+            $success = "You are already registered for this event.";
+        } else {
+            // Resend rejected request
+            $resend = $connection->prepare("UPDATE event_registrations SET status='pending', registered_at=NOW() WHERE id=?");
+            $resend->bind_param("i", $row['id']);
+            $resend->execute();
+            $success = "Registration request re-sent!";
+        }
     }
 }
 
@@ -229,27 +244,42 @@ $events = $ev->get_result();
             <p><b>Registration Deadline:</b> <?= $e['registration_deadline'] ?></p>
             <p><b>Max Participants:</b> <?= $e['max_participants'] ?></p>
 
-            <!-- CHECK REGISTRATION -->
+            <!-- CHECK REGISTRATION STATUS -->
             <?php
             $event_id = $e['id'];
-            $check = $connection->prepare("SELECT id FROM event_registrations WHERE event_id=? AND member_id=?");
+            $check = $connection->prepare("SELECT id, status FROM event_registrations WHERE event_id=? AND member_id=?");
             $check->bind_param("ii", $event_id, $member_id);
             $check->execute();
-            $registered = $check->get_result()->num_rows > 0;
+            $reg_result = $check->get_result();
+            $registration_status = "";
+            if ($reg_result->num_rows > 0) {
+                $reg_row = $reg_result->fetch_assoc();
+                $registration_status = $reg_row['status'];
+            }
             ?>
 
-            <!-- REGISTER / LEAVE BUTTON -->
-            <?php if ($registered): ?>
-                <form method="POST">
+            <!-- REGISTRATION STATUS & BUTTONS -->
+            <?php if ($registration_status === "approved"): ?>
+                <p style="color:green;"><b>You are registered for this event!</b></p>
+                <form method="POST" style="display:inline;">
                     <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                     <input type="hidden" name="leave_event_id" value="<?= $event_id ?>">
                     <button style="background:red; color:white; padding:6px 12px; border:none;">Leave Event</button>
                 </form>
-            <?php elseif ($member_id && $role === "member" && $membership_status === "approved"): ?>
-                <form method="POST">
+            <?php elseif ($registration_status === "pending"): ?>
+                <p style="color:orange;"><b>Registration request pending approval.</b></p>
+            <?php elseif ($registration_status === "rejected"): ?>
+                <p style="color:red;"><b>Your registration was rejected.</b></p>
+                <form method="POST" style="display:inline;">
                     <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                     <input type="hidden" name="register_event_id" value="<?= $event_id ?>">
-                    <button style="background:green; color:white; padding:6px 12px; border:none;">Register</button>
+                    <button style="background:green; color:white; padding:6px 12px; border:none;">Request Again</button>
+                </form>
+            <?php elseif ($member_id && $role === "member" && $membership_status === "approved"): ?>
+                <form method="POST" style="display:inline;">
+                    <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                    <input type="hidden" name="register_event_id" value="<?= $event_id ?>">
+                    <button style="background:green; color:white; padding:6px 12px; border:none;">Request Registration</button>
                 </form>
             <?php elseif (!$member_id || $role !== "member"): ?>
                 <p style="color:orange;">Login to register for events.</p>

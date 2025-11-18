@@ -1,6 +1,7 @@
 <?php
 session_start();
 include "../includes/database.php";
+include "../includes/functions.php";
 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'member') {
     header("Location: ../public/login.php");
@@ -11,25 +12,64 @@ $member_id = $_SESSION['user_id'];
 
 
 // -----------------------------------------------------
-//  REGISTER EVENT (stay on same page using PRG pattern)
+//  REGISTER EVENT (send request -> pending)
 // -----------------------------------------------------
-if (isset($_POST['register_event_id'])) {
+if (isset($_POST['register_event_id']) && $member_id && $_SESSION['role'] === 'member') {
+    // Verify CSRF token
+    if (!isset($_POST['csrf_token']) || !verifyCSRFToken($_POST['csrf_token'])) {
+        die("CSRF token validation failed.");
+    }
 
     $event_id = intval($_POST['register_event_id']);
 
-    // Prevent duplicate registrations
-    $check = $connection->prepare("SELECT id FROM event_registrations WHERE event_id=? AND member_id=?");
+    // Find the event and its club
+    $ev = $connection->prepare("SELECT club_id FROM events WHERE id=?");
+    $ev->bind_param("i", $event_id);
+    $ev->execute();
+    $evR = $ev->get_result();
+    if ($evR->num_rows === 0) {
+        die("Event not found.");
+    }
+    $eventRow = $evR->fetch_assoc();
+    $clubIdForEvent = $eventRow['club_id'];
+
+    // Check membership status for that club
+    $m = $connection->prepare("SELECT status FROM club_members WHERE club_id=? AND user_id=?");
+    $m->bind_param("ii", $clubIdForEvent, $member_id);
+    $m->execute();
+    $mres = $m->get_result();
+    $membership_status = '';
+    if ($mres->num_rows > 0) {
+        $membership_status = $mres->fetch_assoc()['status'];
+    }
+
+    if ($membership_status !== 'approved') {
+        die("You must be an approved member of this club to register for events.");
+    }
+
+    // Check for existing registration
+    $check = $connection->prepare("SELECT id, status FROM event_registrations WHERE event_id=? AND member_id=?");
     $check->bind_param("ii", $event_id, $member_id);
     $check->execute();
-    $exists = $check->get_result()->num_rows > 0;
+    $existing = $check->get_result();
 
-    if (!$exists) {
-        $insert = $connection->prepare("
-            INSERT INTO event_registrations (event_id, member_id, registered_at)
-            VALUES (?, ?, NOW())
-        ");
-        $insert->bind_param("ii", $event_id, $member_id);
-        $insert->execute();
+    if ($existing->num_rows == 0) {
+        // New registration request with pending status
+        $reg = $connection->prepare("INSERT INTO event_registrations (event_id, member_id, status, registered_at) VALUES (?, ?, 'pending', NOW())");
+        $reg->bind_param("ii", $event_id, $member_id);
+        $reg->execute();
+    } else {
+        $row = $existing->fetch_assoc();
+        if ($row['status'] === 'pending') {
+            // already pending - no action
+        } elseif ($row['status'] === 'approved') {
+            // already approved
+        } else {
+            // resend rejected request
+            $resend = $connection->prepare("UPDATE event_registrations SET status='pending', registered_at=NOW() WHERE id=?");
+            $resend->bind_param("i", $row['id']);
+            $resend->execute();
+        }
     }
 
     header("Location: " . strtok($_SERVER['REQUEST_URI'], '?') . "?" . $_SERVER['QUERY_STRING']);
@@ -40,13 +80,15 @@ if (isset($_POST['register_event_id'])) {
 // -----------------------------------------------------
 //  LEAVE EVENT
 // -----------------------------------------------------
-if (isset($_POST['leave_event_id'])) {
+if (isset($_POST['leave_event_id']) && $member_id && $_SESSION['role'] === 'member') {
+    // Verify CSRF token
+    if (!isset($_POST['csrf_token']) || !verifyCSRFToken($_POST['csrf_token'])) {
+        die("CSRF token validation failed.");
+    }
 
     $event_id = intval($_POST['leave_event_id']);
 
-    $delete = $connection->prepare("
-        DELETE FROM event_registrations WHERE event_id=? AND member_id=?
-    ");
+    $delete = $connection->prepare("DELETE FROM event_registrations WHERE event_id=? AND member_id=?");
     $delete->bind_param("ii", $event_id, $member_id);
     $delete->execute();
 
@@ -223,22 +265,62 @@ $events_result = $stmt->get_result();
 
             <!-- REGISTER / LEAVE BUTTON -->
             <?php
-            $check = $connection->prepare("SELECT id FROM event_registrations WHERE event_id=? AND member_id=?");
-            $check->bind_param("ii", $e['event_id'], $member_id);
+            $event_id = $e['event_id'];
+
+            // Check registration status for this event
+            $check = $connection->prepare("SELECT id, status FROM event_registrations WHERE event_id=? AND member_id=?");
+            $check->bind_param("ii", $event_id, $member_id);
             $check->execute();
-            $registered = $check->get_result()->num_rows > 0;
+            $reg_result = $check->get_result();
+            $registration_status = "";
+            if ($reg_result->num_rows > 0) {
+                $reg_row = $reg_result->fetch_assoc();
+                $registration_status = $reg_row['status'];
+            }
+
+            // Check membership status for the event's club
+            $membership_status = '';
+            if ($member_id && isset($e['club_id'])) {
+                $m = $connection->prepare("SELECT status FROM club_members WHERE club_id=? AND user_id=?");
+                $m->bind_param("ii", $e['club_id'], $member_id);
+                $m->execute();
+                $mres = $m->get_result();
+                if ($mres->num_rows > 0) {
+                    $membership_status = $mres->fetch_assoc()['status'];
+                }
+            }
             ?>
 
-            <?php if ($registered): ?>
+            <?php if ($registration_status === "approved"): ?>
                 <form method="POST">
-                    <input type="hidden" name="leave_event_id" value="<?= $e['event_id'] ?>">
+                    <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                    <input type="hidden" name="leave_event_id" value="<?= $event_id ?>">
                     <button class="btn btn-red">Leave Event</button>
                 </form>
-            <?php else: ?>
-                <form method="POST">
-                    <input type="hidden" name="register_event_id" value="<?= $e['event_id'] ?>">
-                    <button class="btn btn-green">Register</button>
+
+            <?php elseif ($registration_status === "pending"): ?>
+                <p style="color:orange; display:inline;">Registration request pending approval.</p>
+
+            <?php elseif ($registration_status === "rejected"): ?>
+                <p style="color:red; display:inline;">Your registration was rejected.</p>
+                <form method="POST" style="display:inline; margin-left:8px;">
+                    <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                    <input type="hidden" name="register_event_id" value="<?= $event_id ?>">
+                    <button class="btn btn-green">Request Again</button>
                 </form>
+
+            <?php elseif ($member_id && $_SESSION['role'] === 'member' && $membership_status === 'approved'): ?>
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                    <input type="hidden" name="register_event_id" value="<?= $event_id ?>">
+                    <button class="btn btn-green">Request Registration</button>
+                </form>
+
+            <?php elseif (!$member_id || $_SESSION['role'] !== 'member'): ?>
+                <p style="color:orange;">Login to register for events.</p>
+
+            <?php else: ?>
+                <p style="color:orange;">You must be an approved member to register for events.</p>
             <?php endif; ?>
 
             <p style="font-size:12px;color:#666;margin-top:8px;">
