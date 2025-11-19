@@ -5,8 +5,8 @@
     <div class="footer-container">
         <!-- About Section -->
         <div class="footer-section">
-            <h4>About ClubHub</h4>
-            <p>ClubHub is a comprehensive platform for managing clubs, events, and memberships. Connect, organize, and grow your community.</p>
+            <h4>About ClubWeave</h4>
+            <p>ClubWeave is a comprehensive platform for managing clubs, events, and memberships. Connect, organize, and grow your community.</p>
             <div class="social-links">
                 <a href="#" title="Facebook">f</a>
                 <a href="#" title="Twitter">𝕏</a>

@@ -163,148 +163,172 @@ $ev->execute();
 $events = $ev->get_result();
 
 ?>
-
 <main>
 <div class="container mt-4">
 
 <a href="clubs.php" class="btn btn-ghost mb-4">← Back to Clubs</a>
 
 <?php if (!empty($success)): ?>
-<div style="background:#d4edda; color:#155724; padding:12px; border-radius:6px; margin-bottom:20px;" class="mb-4">
+<div class="alert-success mb-4">
     <?= $success ?>
 </div>
 <?php endif; ?>
 
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: start;">
-  <!-- Club Info Section -->
-  <div>
-    <?php if ($club['logo']): ?>
-        <img src="<?= htmlspecialchars($club['logo']) ?>" alt="Club logo" style="width: 100%; border-radius: 8px; margin-bottom: 20px; object-fit: cover; height: 300px;">
-    <?php endif; ?>
+<div class="club-layout">
 
-    <h2 class="mb-3"><?= htmlspecialchars($club['name']) ?></h2>
-    <p class="text-muted mb-4"><strong>Category:</strong> <span class="badge badge-success"><?= htmlspecialchars($club['category']) ?></span></p>
-    <div class="card mb-4">
-      <p><strong>Description:</strong></p>
-      <p class="text-muted"><?= nl2br(htmlspecialchars($club['description'])) ?></p>
-      <p class="mb-1"><strong>Created:</strong> <span class="text-muted"><?= $club['created_at'] ?></span></p>
-    </div>
+    <!-- LEFT: Club Information -->
+    <div class="club-info">
 
-    <!-- Membership Section -->
-    <div class="card">
-      <h3 class="card-header mb-3">Membership</h3>
+        <?php if ($club['logo']): ?>
+            <img src="<?= htmlspecialchars($club['logo']) ?>" 
+                 alt="Club logo" 
+                 class="club-banner">
+        <?php endif; ?>
 
-      <?php if (!$member_id || $role !== "member"): ?>
-          <p class="text-muted">Login as a member to join this club.</p>
+        <h2 class="club-title"><?= htmlspecialchars($club['name']) ?></h2>
 
-      <?php else: ?>
+        <p class="text-muted mb-2">
+            <strong>Category:</strong> 
+            <span class="badge badge-success"><?= htmlspecialchars($club['category']) ?></span>
+        </p>
 
-          <?php if ($membership_status === "approved"): ?>
-              <p class="badge badge-success mb-3">✓ You are a member of this club</p>
-              <form method="POST">
-                  <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
-                  <button type="submit" name="leave_club" class="btn" style="background:#dc3545; color:white;">Leave Club</button>
-              </form>
-
-          <?php elseif ($membership_status === "pending"): ?>
-              <p class="badge badge-warning">⏳ Your membership request is pending approval</p>
-
-          <?php else: ?>
-              <form method="POST">
-                  <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
-                  <button type="submit" name="join_club" class="btn btn-primary">Join Club</button>
-              </form>
-          <?php endif; ?>
-
-      <?php endif; ?>
-    </div>
-  </div>
-
-  <!-- Events Section -->
-  <div>
-    <h3 class="mb-3">Club Events</h3>
-
-    <?php if ($events->num_rows === 0): ?>
-        <div class="card text-center text-muted">No events yet.</div>
-
-    <?php else: ?>
-        <div style="display: flex; flex-direction: column; gap: 16px;">
-          <?php while ($e = $events->fetch_assoc()): ?>
-              <div class="card">
-                  <?php if (!empty($e['event_image'])): ?>
-                      <img src="<?= htmlspecialchars($e['event_image']) ?>" alt="Event" style="width: 100%; height: 160px; object-fit: cover; border-radius: 6px; margin-bottom: 12px;">
-                  <?php endif; ?>
-
-                  <h4 class="mb-2"><?= htmlspecialchars($e['title']) ?></h4>
-                  <p class="text-muted mb-2"><?= nl2br(htmlspecialchars($e['description'])) ?></p>
-                  <p class="mb-1"><strong>Date:</strong> <?= $e['date'] ?> @ <?= $e['event_time'] ?></p>
-                  <p class="mb-1"><strong>Venue:</strong> <?= htmlspecialchars($e['venue']) ?></p>
-                  <p class="mb-3"><strong>Deadline:</strong> <?= $e['registration_deadline'] ?></p>
-                  <p class="text-muted" style="font-size: 12px;">Max: <?= $e['max_participants'] ?> participants</p>
-
-                  <!-- Registration Status -->
-                  <?php
-                  $event_id = $e['id'];
-                  $check = $connection->prepare("SELECT id, status FROM event_registrations WHERE event_id=? AND member_id=?");
-                  $check->bind_param("ii", $event_id, $member_id);
-                  $check->execute();
-                  $reg_result = $check->get_result();
-                  $registration_status = "";
-                  if ($reg_result->num_rows > 0) {
-                      $reg_row = $reg_result->fetch_assoc();
-                      $registration_status = $reg_row['status'];
-                  }
-                  ?>
-
-                  <div class="mt-3" style="display: flex; gap: 8px;">
-                    <?php if ($registration_status === "approved"): ?>
-                        <p class="badge badge-success" style="margin: 0;">✓ Registered</p>
-                        <form method="POST" style="margin-left: auto;">
-                            <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
-                            <input type="hidden" name="leave_event_id" value="<?= $event_id ?>">
-                            <button class="btn" style="background:#dc3545; color:white; padding: 6px 12px;">Leave</button>
-                        </form>
-                    <?php elseif ($registration_status === "pending"): ?>
-                        <p class="badge badge-warning" style="margin: 0;">⏳ Pending</p>
-                    <?php elseif ($registration_status === "rejected"): ?>
-                        <p class="badge badge-danger" style="margin: 0;">Rejected</p>
-                        <form method="POST" style="margin-left: auto;">
-                            <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
-                            <input type="hidden" name="register_event_id" value="<?= $event_id ?>">
-                            <button class="btn btn-primary" style="padding: 6px 12px;">Request Again</button>
-                        </form>
-                    <?php elseif ($member_id && $role === "member" && $membership_status === "approved"): ?>
-                        <form method="POST">
-                            <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
-                            <input type="hidden" name="register_event_id" value="<?= $event_id ?>">
-                            <button class="btn btn-primary">Request Registration</button>
-                        </form>
-                    <?php elseif (!$member_id || $role !== "member"): ?>
-                        <p class="text-muted" style="margin: 0;">Login to register</p>
-                    <?php else: ?>
-                        <p class="text-muted" style="margin: 0;">Must be approved member</p>
-                    <?php endif; ?>
-                  </div>
-              </div>
-          <?php endwhile; ?>
+        <div class="card mb-4">
+            <p><strong>Description:</strong></p>
+            <p class="text-muted"><?= nl2br(htmlspecialchars($club['description'])) ?></p>
+            <p class="mt-3"><strong>Created:</strong> <span class="text-muted"><?= $club['created_at'] ?></span></p>
         </div>
+
+        <!-- Membership Box -->
+        <div class="card membership-box">
+            <h3 class="card-header mb-3">Membership</h3>
+
+            <?php if (!$member_id || $role !== "member"): ?>
+                <p class="text-muted">Login as a member to join this club.</p>
+
+            <?php else: ?>
+
+                <?php if ($membership_status === "approved"): ?>
+                    <p class="badge badge-success mb-3">✓ You are a member</p>
+                    <form method="POST">
+                        <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                        <button type="submit" name="leave_club" class="btn btn-danger">Leave Club</button>
+                    </form>
+
+                <?php elseif ($membership_status === "pending"): ?>
+                    <p class="badge badge-warning">⏳ Request pending</p>
+
+                <?php else: ?>
+                    <form method="POST">
+                        <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                        <button type="submit" name="join_club" class="btn btn-primary">Join Club</button>
+                    </form>
+                <?php endif; ?>
+
+            <?php endif; ?>
+        </div>
+
+    </div>
+
+
+    <!-- RIGHT: Events Section -->
+    <div class="club-events">
+
+        <h3 class="section-title">Club Events</h3>
+
+        <?php if ($events->num_rows === 0): ?>
+            <div class="card text-center text-muted">No events yet.</div>
+
+        <?php else: ?>
+            <div class="event-list">
+
+                <?php while ($e = $events->fetch_assoc()): ?>
+                    <div class="event-card">
+
+                        <?php if (!empty($e['event_image'])): ?>
+                            <img src="<?= htmlspecialchars($e['event_image']) ?>" 
+                                 class="event-image" 
+                                 alt="Event">
+                        <?php endif; ?>
+
+                        <h4 class="event-title"><?= htmlspecialchars($e['title']) ?></h4>
+                        <p class="event-desc text-muted"><?= nl2br(htmlspecialchars($e['description'])) ?></p>
+
+                        <div class="event-meta">
+                            <p><strong>Date:</strong> <?= $e['date'] ?> @ <?= $e['event_time'] ?></p>
+                            <p><strong>Venue:</strong> <?= htmlspecialchars($e['venue']) ?></p>
+                            <p><strong>Deadline:</strong> <?= $e['registration_deadline'] ?></p>
+                            <p class="text-muted" style="font-size: 12px;">Max: <?= $e['max_participants'] ?> participants</p>
+                        </div>
+
+                        <!-- Registration Logic (unchanged) -->
+                        <?php
+                        $event_id = $e['id'];
+                        $check = $connection->prepare("SELECT id, status FROM event_registrations WHERE event_id=? AND member_id=?");
+                        $check->bind_param("ii", $event_id, $member_id);
+                        $check->execute();
+                        $reg_result = $check->get_result();
+                        $registration_status = "";
+                        if ($reg_result->num_rows > 0) {
+                            $reg_row = $reg_result->fetch_assoc();
+                            $registration_status = $reg_row['status'];
+                        }
+                        ?>
+
+                        <div class="event-actions">
+                            <?php if ($registration_status === "approved"): ?>
+                                <span class="badge badge-success">✓ Registered</span>
+                                <form method="POST" class="ml-auto">
+                                    <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                                    <input type="hidden" name="leave_event_id" value="<?= $event_id ?>">
+                                    <button class="btn btn-danger">Leave</button>
+                                </form>
+
+                            <?php elseif ($registration_status === "pending"): ?>
+                                <span class="badge badge-warning">⏳ Pending</span>
+
+                            <?php elseif ($registration_status === "rejected"): ?>
+                                <span class="badge badge-danger">Rejected</span>
+                                <form method="POST" class="ml-auto">
+                                    <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                                    <input type="hidden" name="register_event_id" value="<?= $event_id ?>">
+                                    <button class="btn btn-primary">Request Again</button>
+                                </form>
+
+                            <?php elseif ($member_id && $role === "member" && $membership_status === "approved"): ?>
+                                <form method="POST">
+                                    <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                                    <input type="hidden" name="register_event_id" value="<?= $event_id ?>">
+                                    <button class="btn btn-primary">Request Registration</button>
+                                </form>
+
+                            <?php else: ?>
+                                <span class="text-muted">Login or become approved member</span>
+                            <?php endif; ?>
+                        </div>
+
+                    </div>
+                <?php endwhile; ?>
+
+            </div>
+        <?php endif; ?>
 
         <!-- Pagination -->
-        <div class="mt-4 d-flex justify-between items-center">
-          <?php if ($page > 1): ?>
-              <a href="?id=<?= $club_id ?>&page=<?= $page - 1 ?>" class="btn btn-outline">← Previous</a>
-          <?php endif; ?>
+        <div class="pagination-controls">
+            <?php if ($page > 1): ?>
+                <a href="?id=<?= $club_id ?>&page=<?= $page - 1 ?>" class="btn btn-outline">← Previous</a>
+            <?php endif; ?>
 
-          <?php if ($page < $totalPages): ?>
-              <a href="?id=<?= $club_id ?>&page=<?= $page + 1 ?>" class="btn btn-outline" style="margin-left: auto;">Next →</a>
-          <?php endif; ?>
+            <?php if ($page < $totalPages): ?>
+                <a href="?id=<?= $club_id ?>&page=<?= $page + 1 ?>" class="btn btn-outline">Next →</a>
+            <?php endif; ?>
         </div>
 
-    <?php endif; ?>
-  </div>
+    </div>
+
 </div>
 
 </div>
 </main>
+
 
 <?php include '../includes/footer.php'; ?>

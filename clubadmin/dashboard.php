@@ -45,12 +45,42 @@ $total_events = $event_result->fetch_assoc()['total_events'] ?? 0;
   </div>
 </div>
 
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
-  <a href="manage_clubs.php" class="btn btn-primary">Manage Clubs</a>
-  <a href="manage_events.php" class="btn btn-primary">Manage Events</a>
-  <a href="manage_requests.php" class="btn btn-primary">Manage Requests</a>
-  <a href="../public/logout.php" class="btn btn-ghost">Logout</a>
+<div class="dashboard-grid">
+
+    <div class="card">
+        <div class="card-header">Manage Clubs</div>
+        <div class="card-body">
+            <p>View and edit the clubs you manage, update details, and handle membership.</p>
+            <a href="manage_clubs.php" class="btn btn-primary" style="width: 100%; text-align: center;">Manage Clubs</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">Manage Events</div>
+        <div class="card-body">
+            <p>Create, update, and manage event registrations for your clubs.</p>
+            <a href="manage_events.php" class="btn btn-primary" style="width: 100%; text-align: center;">Manage Events</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">Membership Requests</div>
+        <div class="card-body">
+            <p>Review join requests from members and approve or reject applications.</p>
+            <a href="manage_requests.php" class="btn btn-primary" style="width: 100%; text-align: center;">View Requests</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">Logout</div>
+        <div class="card-body">
+            <p>Securely log out of your club admin account.</p>
+            <a href="../public/logout.php" class="btn btn-ghost" style="width: 100%; text-align: center;">Logout</a>
+        </div>
+    </div>
+
 </div>
+
 
 </div>
 </main>

@@ -8,27 +8,33 @@
 
 /* ========== Variables / Design Tokens ========== */
 :root {
-	/* Colors */
-	--color-primary: #0d6efd;
-	--color-primary-600: #0b5ed7;
-	--color-primary-700: #084298;
-	--color-primary-rgb: 13,110,253;
+	/* Primary (muted blue) */
+	--color-primary: #3b82f6;
+	--color-primary-600: #2563eb;
+	--color-primary-700: #1d4ed8;
+	--color-primary-rgb: 59,130,246;
 
-	--color-secondary: #17a2b8; /* teal accent */
-	--color-accent: #ffc107; /* warm accent */
+	/* Secondary (cool gray-teal) */
+	--color-secondary: #5caab7;
 
-	--text: #212529;
-	--text-muted: #6c757d;
+	/* Accent (softer amber) */
+	--color-accent: #f6c453;
 
-	--surface-1: #ffffff; /* cards, panels */
-	--surface-2: #f8f9fa; /* page background */
-	--border-color: #e9ecef;
+	/* Neutral Text */
+	--text: #2d2d2d;
+	--text-muted: #6e6e6e;
 
-	--success: #28a745;
-	--danger: #dc3545;
-	--warning: #ffc107;
+	/* Softer Surfaces */
+	--surface-1: #ffffff;
+	--surface-2: #f2f4f7; /* slightly darker than your old #f8f9fa */
+	--border-color: #dcdfe3; /* clearer borders */
 
-	/* Spacing scale */
+	/* Semantic Colors */
+	--success: #22c55e;
+	--danger: #ef4444;
+	--warning: #f4c430;
+
+	/* Spacing */
 	--space-1: 4px;
 	--space-2: 8px;
 	--space-3: 12px;
@@ -43,8 +49,8 @@
 	--radius-pill: 999px;
 
 	/* Shadows */
-	--shadow-sm: 0 6px 18px rgba(33,37,41,0.06);
-	--shadow-lg: 0 20px 40px rgba(22,28,45,0.12);
+	--shadow-sm: 0 6px 18px rgba(0,0,0,0.05);
+	--shadow-lg: 0 20px 40px rgba(0,0,0,0.1);
 
 	/* Typography */
 	--font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -55,6 +61,7 @@
 	--fs-xl: 24px;
 	--lh-normal: 1.5;
 }
+
 
 /* Dark theme */
 @media (prefers-color-scheme: dark) {
@@ -95,11 +102,29 @@ a:hover { text-decoration: underline; }
 img { max-width: 100%; height: auto; display: block; }
 
 /* Container */
-.container { max-width: 1200px; margin: 0 auto; padding: 0 var(--space-4);  }
+.container { max-width: 1200px; margin: var(--space-6) auto; padding: 0 var(--space-4);  }
 
 /* Typography helpers */
 .text-muted { color: var(--text-muted); }
 .text-center { text-align: center; }
+
+
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; /* ensures body fills viewport */
+}
+
+main {
+    flex: 1; /* fills remaining space before footer */
+    padding: var(--space-6) var(--space-4); /* top & bottom breathing room */
+}
+
 
 /* ========== Header/Footer ========== */
 .main-header {
@@ -251,6 +276,121 @@ img { max-width: 100%; height: auto; display: block; }
 .mobile-menu-toggle:hover {
     color: var(--color-primary); /* optional hover effect */
 }
+
+
+/* DASHBOARD GRID */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+    margin-top: 20px;
+}
+
+.card-link {
+    padding: 18px;
+    border-radius: 12px;
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-decoration: none;
+    background: var(--card-bg);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    transition: 0.25s ease;
+}
+
+.card-link:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.card-link.logout {
+    background: var(--danger-bg);
+    color: var(--danger-text);
+}
+
+
+
+/* ========== Page Header ========== */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.page-title {
+    font-size: 1.6rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.page-actions {
+    display: flex;
+    gap: 10px;
+}
+
+@media (max-width: 600px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .page-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .page-actions a {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+
+/* ========== Club Details ========== */
+.club-banner img {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+.club-info-card .card-header h2 {
+    margin: 0;
+}
+
+.club-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+}
+
+.membership-box .badge-success {
+    font-size: 14px;
+}
+
+.card-list {
+    display: grid;
+    gap: 16px;
+}
+
+.event-card .card-header {
+    font-size: 18px;
+}
+
+@media (max-width: 768px) {
+    .club-banner img {
+        height: 180px;
+    }
+}
+
+
+
+
 
 
 /* ========== Cards ========== */

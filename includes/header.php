@@ -23,7 +23,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
         <!-- Logo -->
         <div class="logo">
             <a href="<?php echo $is_logged_in ? '../member/dashboard.php' : '../public/login.php'; ?>">
-                 <span>ClubHub</span>
+                 <span>ClubWeave</span>
             </a>
         </div>
 
