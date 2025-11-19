@@ -71,13 +71,13 @@ $total_events = $event_result->fetch_assoc()['total_events'] ?? 0;
         </div>
     </div>
 
-    <div class="card">
+    <!-- <div class="card">
         <div class="card-header">Logout</div>
         <div class="card-body">
             <p>Securely log out of your club admin account.</p>
             <a href="../public/logout.php" class="btn btn-ghost" style="width: 100%; text-align: center;">Logout</a>
         </div>
-    </div>
+    </div> -->
 
 </div>
 

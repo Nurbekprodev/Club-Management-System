@@ -58,103 +58,60 @@ $result = $query->get_result();
 <main>
 <div class="container mt-4">
 
-<div class="d-flex justify-between items-center mb-4">
-  <h2>Manage Users</h2>
-  <a href="dashboard.php" class="btn btn-ghost">← Back to Dashboard</a>
-</div>
+    <div class="d-flex justify-between items-center mb-4">
+        <h2>Manage Users</h2>
+        <a href="dashboard.php" class="btn btn-ghost">← Back to Dashboard</a>
+    </div>
 
-<?php displayMessages(); ?>
+    <?php displayMessages(); ?>
 
-<?php if ($result->num_rows > 0): ?>
-  <table>
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Name</th>
-        <th>Email</th>
-        <th>Role</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <?php while ($row = $result->fetch_assoc()): ?>
-      <tr>
-        <td><?= $row['id'] ?></td>
-        <td><?= htmlspecialchars($row['name']) ?></td>
-        <td><?= htmlspecialchars($row['email']) ?></td>
-        <td><?= htmlspecialchars($row['role']) ?></td>
-        <td>
-            <form method="POST" style="display:inline;">
-                <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
-                <input type="hidden" name="user_id" value="<?= $row['id'] ?>">
-                <select name="role" class="form-control" style="display:inline; width: auto;">
-                    <option value="member" <?php echo $row['role'] === 'member' ? 'selected' : ''; ?>>Member</option>
-                    <option value="clubadmin" <?php echo $row['role'] === 'clubadmin' ? 'selected' : ''; ?>>Club Admin</option>
-                    <option value="superadmin" <?php echo $row['role'] === 'superadmin' ? 'selected' : ''; ?>>Superadmin</option>
-                </select>
-                <button type="submit" name="update_role" class="btn btn-outline" style="display:inline; margin-left: 8px;">Update</button>
-            </form>
-            <form method="POST" style="display:inline; margin-left: 8px;">
-                <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
-                <input type="hidden" name="delete_user_id" value="<?= $row['id'] ?>">
-                <button type="submit" onclick="return confirm('Delete this user?')" class="btn btn-outline" style="color: var(--danger);">Delete</button>
-            </form>
-        </td>
-      </tr>
-      <?php endwhile; ?>
-    </tbody>
-  </table>
-<?php else: ?>
-  <div class="card text-center text-muted">
-    <p>No users found.</p>
-  </div>
-<?php endif; ?>
-            text-decoration: none;
-        }
-    </style>
-</head>
-<body>
+    <?php if ($result->num_rows > 0): ?>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        <?php while ($row = $result->fetch_assoc()): ?>
+            <tr>
+                <td><?= $row['id'] ?></td>
+                <td><?= htmlspecialchars($row['name']) ?></td>
+                <td><?= htmlspecialchars($row['email']) ?></td>
+                <td><?= htmlspecialchars($row['role']) ?></td>
+                <td>
+                    <!-- Update Role Form -->
+                    <form method="POST" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="<?= generateCSRFToken(); ?>">
+                        <input type="hidden" name="user_id" value="<?= $row['id'] ?>">
+                        <select name="role" class="form-control" style="display:inline; width:auto;">
+                            <option value="member" <?= $row['role'] === 'member' ? 'selected' : ''; ?>>Member</option>
+                            <option value="clubadmin" <?= $row['role'] === 'clubadmin' ? 'selected' : ''; ?>>Club Admin</option>
+                            <option value="superadmin" <?= $row['role'] === 'superadmin' ? 'selected' : ''; ?>>Superadmin</option>
+                        </select>
+                        <button type="submit" name="update_role" class="btn btn-outline" style="margin-left: 8px;">Update</button>
+                    </form>
 
-<h2>Manage Users</h2>
-
-<?php displayMessages(); ?>
-
-<table>
-    <tr>
-        <th>ID</th>
-        <th>Name</th>
-        <th>Email</th>
-        <th>Role</th>
-        <th>Action</th>
-    </tr>
-
-    <?php while ($row = $result->fetch_assoc()): ?>
-    <tr>
-        <td><?= $row['id'] ?></td>
-        <td><?= htmlspecialchars($row['name']) ?></td>
-        <td><?= htmlspecialchars($row['email']) ?></td>
-        <td>
-            <form method="POST" action="" style="display:inline;">
-                <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
-                <input type="hidden" name="user_id" value="<?= $row['id'] ?>">
-                <select name="role">
-                    <option value="member" <?= $row['role']=='member'?'selected':'' ?>>Member</option>
-                    <option value="clubadmin" <?= $row['role']=='clubadmin'?'selected':'' ?>>Club Admin</option>
-                    <option value="superadmin" <?= $row['role']=='superadmin'?'selected':'' ?>>Super Admin</option>
-                </select>
-                <button type="submit" name="update_role">Update</button>
-            </form>
-        </td>
-        <td>
-            <form method="POST" action="" style="display:inline;">
-                <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
-                <input type="hidden" name="delete_user_id" value="<?= $row['id'] ?>">
-                <button type="submit" onclick="return confirm('Delete this user?')" class="btn btn-outline" style="color: var(--danger);">Delete</button>
-            </form>
-        </td>
-    </tr>
-    <?php endwhile; ?>
-</table>
+                    <!-- Delete User Form -->
+                    <form method="POST" style="display:inline; margin-left:8px;">
+                        <input type="hidden" name="csrf_token" value="<?= generateCSRFToken(); ?>">
+                        <input type="hidden" name="delete_user_id" value="<?= $row['id'] ?>">
+                        <button type="submit" onclick="return confirm('Delete this user?')" class="btn btn-outline" style="color: var(--danger);">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        <?php endwhile; ?>
+        </tbody>
+    </table>
+    <?php else: ?>
+    <div class="card text-center text-muted">
+        <p>No users found.</p>
+    </div>
+    <?php endif; ?>
 
 </div>
 </main>
