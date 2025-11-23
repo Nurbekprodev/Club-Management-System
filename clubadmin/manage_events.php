@@ -77,10 +77,11 @@ $events = $stmt->get_result();
           <td><?= htmlspecialchars($row['registration_deadline']) ?></td>
           <td><?= htmlspecialchars($row['max_participants']) ?></td>
           <td>
-            <a href="view_event.php?id=<?= $row['id'] ?>" class="btn btn-outline" style="padding: 4px 8px; font-size: 12px;">View</a>
-            <a href="edit_event.php?id=<?= $row['id'] ?>" class="btn btn-outline" style="padding: 4px 8px; font-size: 12px;">Edit</a>
-            <a href="manage_events.php?delete=<?= $row['id'] ?>" class="btn btn-outline" style="padding: 4px 8px; font-size: 12px; color: #dc3545;" onclick="return confirm('Delete this event?');">Delete</a>
+            <a href="view_event.php?id=<?= $row['id'] ?>" class="table-action-btn view">View</a>
+            <a href="edit_event.php?id=<?= $row['id'] ?>" class="table-action-btn edit">Edit</a>
+            <a href="manage_events.php?delete=<?= $row['id'] ?>" class="table-action-btn delete" onclick="return confirm('Delete this event?');">Delete</a>
           </td>
+
         </tr>
         <?php endwhile; ?>
       </tbody>

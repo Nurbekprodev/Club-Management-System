@@ -48,14 +48,12 @@ $clubs = $stmt->get_result();
                             <td><?= $club['id'] ?></td>
                             <td><strong><?= htmlspecialchars($club['name']) ?></strong></td>
                             <td><?= htmlspecialchars(substr($club['description'], 0, 60)) ?>...</td>
-                            <td class="actions-col">
-                                <a href="view_club.php?id=<?= $club['id'] ?>" class="btn btn-small">View</a>
-                                <a href="edit_club.php?id=<?= $club['id'] ?>" class="btn btn-small">Edit</a>
-                                <a href="delete_club.php?id=<?= $club['id'] ?>" class="btn btn-small btn-danger"
-                                   onclick="return confirm('Are you sure you want to delete this club?');">
-                                    Delete
-                                </a>
-                            </td>
+                        <td class="actions-col">
+                            <a href="view_club.php?id=<?= $club['id'] ?>" class="table-action-btn view">View</a>
+                            <a href="edit_club.php?id=<?= $club['id'] ?>" class="table-action-btn edit">Edit</a>
+                            <a href="delete_club.php?id=<?= $club['id'] ?>" class="table-action-btn delete" onclick="return confirm('Are you sure you want to delete this club?');">Delete</a>
+                        </td>                          
+
                         </tr>
                     <?php endwhile; ?>
                 </tbody>

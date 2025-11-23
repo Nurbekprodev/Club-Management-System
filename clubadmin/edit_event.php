@@ -47,14 +47,12 @@ if (isset($_POST['update_event'])) {
     $venue = trim($_POST['venue']);
     $registration_deadline = $_POST['registration_deadline'];
     $max_participants = intval($_POST['max_participants']);
-    $event_image = $event['event_image']; // Keep old image by default
+    $event_image = $event['event_image']; // keep old image by default
 
     // If new image uploaded
     if (!empty($_FILES['event_image']['name'])) {
         $target_dir = "../includes/images/";
-        if (!is_dir($target_dir)) {
-            mkdir($target_dir, 0777, true);
-        }
+        if (!is_dir($target_dir)) mkdir($target_dir, 0777, true);
         $target_file = $target_dir . basename($_FILES['event_image']['name']);
         if (move_uploaded_file($_FILES['event_image']['tmp_name'], $target_file)) {
             $event_image = $target_file;
@@ -66,7 +64,6 @@ if (isset($_POST['update_event'])) {
             SET club_id = ?, title = ?, description = ?, date = ?, event_time = ?, venue = ?, 
                 registration_deadline = ?, max_participants = ?, event_image = ?
             WHERE id = ? AND created_by = ?";
-
     $stmt = $connection->prepare($sql);
     $stmt->bind_param(
         "issssssissi",

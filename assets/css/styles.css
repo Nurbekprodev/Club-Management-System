@@ -80,7 +80,7 @@
 	--surface-2: #0b1220;
 	--text: #e6eef8;
 	--text-muted: #9aa6b2;
-	--border-color: rgba(255,255,255,0.06);
+	--border-color: rgba(255,255,255,0.25);
 	--shadow-sm: none;
 	--color-primary: #66a3ff;
 }
@@ -348,6 +348,52 @@ main {
         width: 100%;
         text-align: center;
     }
+}
+
+
+/* Action buttons for table rows */
+.table-action-btn {
+    display: inline-block;
+    padding: 3px 6px;
+    font-size: 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.table-action-btn.view {
+    background: transparent;
+    color: var(--color-primary);
+    border: 1px solid var(--color-primary);
+}
+
+.table-action-btn.view:hover {
+    background: var(--color-primary);
+    color: #fff;
+}
+
+.table-action-btn.edit {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border-color);
+}
+
+.table-action-btn.edit:hover {
+    background: var(--color-primary);
+    color: #fff;
+}
+
+.table-action-btn.delete {
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid var(--danger);
+}
+
+.table-action-btn.delete:hover {
+    background: var(--danger);
+    color: #fff;
 }
 
 

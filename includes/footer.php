@@ -55,7 +55,7 @@
     <!-- Bottom Bar -->
     <div class="footer-bottom">
         <div class="footer-bottom-container">
-            <p>&copy; <?php echo date('Y'); ?> ClubHub. All rights reserved.</p>
+            <p>&copy; <?php echo date('Y'); ?> ClubWeave. All rights reserved.</p>
             <div class="footer-legal">
                 <a href="#">Privacy Policy</a>
                 <a href="#">Terms of Service</a>

@@ -172,4 +172,12 @@ if (isset($_POST['update_club'])) {
                         <small class="text-muted">Leave blank to keep current logo. Max 5MB (JPEG, PNG, GIF)</small>
                     </div>
 
-                    <button type="submit" name="update_club" class="btn btn-primary" style="width: 100%;
+              
+                    <button type="submit" name="update_club" class="btn btn-primary" style="width: 100%;">Update Club</button>
+                </form>
+            </div> <!-- card-body -->
+        </div> <!-- card -->
+    </div> <!-- container -->
+</main>
+
+<?php include '../includes/footer.php'; ?>
