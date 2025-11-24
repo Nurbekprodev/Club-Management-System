@@ -448,6 +448,11 @@ main {
   font-size: 18px;
 }
 
+.event-list > .event-card {
+    margin-bottom: 20px;
+}
+
+
 @media (max-width: 768px) {
   .club-banner img {
     height: 180px;
@@ -468,21 +473,37 @@ main {
   margin-bottom: var(--space-3);
 }
 .card-img-top {
-  width: 100%;
-  height: auto;
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
-  object-fit: cover;
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
 }
+
+.grid-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.card {
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.1);
+}
+
 
 /* ========== Buttons ========== */
 .btn {
   display: inline-block;
-  padding: 8px 14px;
+  padding: 6px 14px;
   border-radius: var(--radius-sm);
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
   border: 1px solid transparent;
+  margin-top: 2px;
   margin-right: 6px;
 }
 .btn-primary {
@@ -560,14 +581,27 @@ main {
 
 /* Pagination */
 .pagination {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  list-style: none;
-  padding: 0;
-  margin: var(--space-4) 0 0 0;
-  justify-content: center;
+    display: flex;
+    flex-wrap: nowrap;       /* prevent wrapping */
+    gap: 0.5rem;             /* spacing between buttons */
+    justify-content: center;
+    overflow-x: auto;        /* allow horizontal scroll if too many buttons */
+    -webkit-overflow-scrolling: touch; /* smooth scroll on mobile */
 }
+
+.pagination a {
+    white-space: nowrap;     /* prevent button text from breaking */
+}
+
+.pagination::-webkit-scrollbar {
+    height: 6px;
+}
+
+.pagination::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 3px;
+}
+
 
 .pagination li {
   display: inline-block;
@@ -855,3 +889,5 @@ td {
   background: var(--color-primary);
   color: #fff;
 }
+
+

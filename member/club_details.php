@@ -155,7 +155,7 @@ $events = $ev->get_result();
 <main>
 <div class="container mt-4">
 
-<a href="clubs.php" class="btn btn-ghost mb-4">← Back to Clubs</a>
+<a href="view_clubs.php" class="btn btn-ghost mb-4">← Back to Clubs</a>
 
 <?php if (!empty($success)): ?>
 <div class="alert-success mb-4">
@@ -214,94 +214,115 @@ $events = $ev->get_result();
     </div>
 
     <!-- RIGHT: Events Section -->
-    <div class="club-events">
+<div class="club-events">
 
-        <h3 class="section-title">Club Events</h3>
+    <h3 class="section-title">Club Events</h3>
 
-        <?php if ($events->num_rows === 0): ?>
-            <div class="card text-center text-muted">No events yet.</div>
-        <?php else: ?>
-            <div class="event-list">
+    <?php if ($events->num_rows === 0): ?>
+        <div class="card text-center text-muted">No events yet.</div>
+    <?php else: ?>
+        <div class="grid-cards">
+            <?php while ($e = $events->fetch_assoc()): ?>
 
-                <?php while ($e = $events->fetch_assoc()): ?>
-                    <div class="event-card">
+                <div class="card">
 
-                        <!-- Event Image with fallback -->
-                        <img src="<?= !empty($e['event_image']) ? htmlspecialchars($e['event_image']) : '../includes/images/default_event.jpeg' ?>" 
-                             class="event-image" 
-                             alt="Event"
-                             onerror="this.onerror=null;this.src='../includes/images/default_event.jpeg';">
+                    <!-- Event Image -->
+                   <img src="<?= !empty($e['event_image']) ? $e['event_image'] : '../includes/images/default_img.jpeg' ?>"
+                         class="card-img-top"
+                         alt="Event Image">
 
-                        <h4 class="event-title"><?= htmlspecialchars($e['title']) ?></h4>
-                        <p class="event-desc text-muted"><?= nl2br(htmlspecialchars($e['description'])) ?></p>
+                    <h4 class="card-header"><?= htmlspecialchars($e['title']) ?></h4>
 
-                        <div class="event-meta">
-                            <p><strong>Date:</strong> <?= $e['date'] ?> @ <?= $e['event_time'] ?></p>
-                            <p><strong>Venue:</strong> <?= htmlspecialchars($e['venue']) ?></p>
-                            <p><strong>Deadline:</strong> <?= $e['registration_deadline'] ?></p>
-                            <p class="text-muted" style="font-size: 12px;">Max: <?= $e['max_participants'] ?> participants</p>
-                        </div>
+                    <p class="text-muted mb-2 small">
+                        <strong>Date:</strong> <?= $e['date'] ?> @ <?= $e['event_time'] ?><br>
+                        <strong>Venue:</strong> <?= htmlspecialchars($e['venue']) ?><br>
+                        <strong>Deadline:</strong> <?= htmlspecialchars($e['registration_deadline']) ?>
+                    </p>
 
-                        <!-- Registration Logic -->
-                        <?php
-                        $event_id = $e['id'];
-                        $check = $connection->prepare("SELECT id, status FROM event_registrations WHERE event_id=? AND member_id=?");
-                        $check->bind_param("ii", $event_id, $member_id);
-                        $check->execute();
-                        $reg_result = $check->get_result();
-                        $registration_status = "";
-                        if ($reg_result->num_rows > 0) {
-                            $reg_row = $reg_result->fetch_assoc();
-                            $registration_status = $reg_row['status'];
-                        }
-                        ?>
+                    <p class="text-muted"><?= nl2br(htmlspecialchars(substr($e['description'], 0, 120))) ?>...</p>
 
-                        <div class="event-actions">
-                            <?php if ($registration_status === "approved"): ?>
-                                <span class="badge badge-success">✓ Registered</span>
-                                <form method="POST" class="ml-auto">
-                                    <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
-                                    <input type="hidden" name="leave_event_id" value="<?= $event_id ?>">
-                                    <button class="btn btn-danger">Leave</button>
-                                </form>
-                            <?php elseif ($registration_status === "pending"): ?>
-                                <span class="badge badge-warning">⏳ Pending</span>
-                            <?php elseif ($registration_status === "rejected"): ?>
-                                <span class="badge badge-danger">Rejected</span>
-                                <form method="POST" class="ml-auto">
-                                    <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
-                                    <input type="hidden" name="register_event_id" value="<?= $event_id ?>">
-                                    <button class="btn btn-primary">Request Again</button>
-                                </form>
-                            <?php elseif ($member_id && $role === "member" && $membership_status === "approved"): ?>
-                                <form method="POST">
-                                    <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
-                                    <input type="hidden" name="register_event_id" value="<?= $event_id ?>">
-                                    <button class="btn btn-primary">Request Registration</button>
-                                </form>
-                            <?php else: ?>
-                                <span class="text-muted">Login or become approved member</span>
-                            <?php endif; ?>
-                        </div>
+                    <!-- Registration Logic -->
+                    <?php
+                    $event_id = $e['id'];
+                    $check = $connection->prepare("SELECT id, status FROM event_registrations WHERE event_id=? AND member_id=?");
+                    $check->bind_param("ii", $event_id, $member_id);
+                    $check->execute();
+                    $reg_result = $check->get_result();
+                    $registration_status = "";
+                    if ($reg_result->num_rows > 0) {
+                        $reg_row = $reg_result->fetch_assoc();
+                        $registration_status = $reg_row['status'];
+                    }
+                    ?>
 
+                    <div class="mt-2">
+                        <?php if ($registration_status === "approved"): ?>
+                            <span class="badge badge-success">✓ Registered</span>
+                        <?php elseif ($registration_status === "pending"): ?>
+                            <span class="badge badge-warning">⏳ Pending</span>
+                        <?php elseif ($registration_status === "rejected"): ?>
+                            <span class="badge badge-danger">Rejected</span>
+                        <?php elseif ($member_id && $role === "member" && $membership_status === "approved"): ?>
+                            <form method="POST">
+                                <input type="hidden" name="csrf_token" value="<?= generateCSRFToken(); ?>">
+                                <input type="hidden" name="register_event_id" value="<?= $event_id ?>">
+                                <button class="btn btn-primary w-full">Request Registration</button>
+                            </form>
+                        <?php else: ?>
+                            <span class="text-muted">Login or become approved member</span>
+                        <?php endif; ?>
                     </div>
-                <?php endwhile; ?>
 
-            </div>
-        <?php endif; ?>
+                </div>
 
-        <!-- Pagination -->
-        <div class="pagination-controls">
-            <?php if ($page > 1): ?>
-                <a href="?id=<?= $club_id ?>&page=<?= $page - 1 ?>" class="btn btn-outline">← Previous</a>
-            <?php endif; ?>
-
-            <?php if ($page < $totalPages): ?>
-                <a href="?id=<?= $club_id ?>&page=<?= $page + 1 ?>" class="btn btn-outline">Next →</a>
-            <?php endif; ?>
+            <?php endwhile; ?>
         </div>
+    <?php endif; ?>
 
-    </div>
+   <!-- Pagination -->
+<div class="pagination flex gap-2 mt-4 justify-center items-center">
+
+<?php
+$adjacents = 2; // Number of pages to show on each side of current
+$start = max(1, $page - $adjacents);
+$end   = min($totalPages, $page + $adjacents);
+
+// Preserve all GET parameters
+$getParams = $_GET;
+?>
+
+<?php if ($page > 1): 
+    $getParams['page'] = $page - 1; ?>
+    <a href="?<?= http_build_query($getParams) ?>" class="btn btn-outline">← Previous</a>
+<?php endif; ?>
+
+<?php if ($start > 1): 
+    $getParams['page'] = 1; ?>
+    <a href="?<?= http_build_query($getParams) ?>" class="btn btn-outline">1</a>
+    <?php if ($start > 2): ?><span class="px-2">...</span><?php endif; ?>
+<?php endif; ?>
+
+<?php for ($i = $start; $i <= $end; $i++): 
+    $getParams['page'] = $i; ?>
+    <a href="?<?= http_build_query($getParams) ?>" class="btn <?= ($i == $page) ? 'btn-primary' : 'btn-outline' ?>">
+        <?= $i ?>
+    </a>
+<?php endfor; ?>
+
+<?php if ($end < $totalPages): 
+    $getParams['page'] = $totalPages; ?>
+    <?php if ($end < $totalPages - 1): ?><span class="px-2">...</span><?php endif; ?>
+    <a href="?<?= http_build_query($getParams) ?>" class="btn btn-outline"><?= $totalPages ?></a>
+<?php endif; ?>
+
+<?php if ($page < $totalPages): 
+    $getParams['page'] = $page + 1; ?>
+    <a href="?<?= http_build_query($getParams) ?>" class="btn btn-outline">Next →</a>
+<?php endif; ?>
+
+</div>
+
+</div>
 
 </div>
 </div>

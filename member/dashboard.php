@@ -22,15 +22,7 @@ if ($_SESSION['role'] !== 'member') {
                 <div class="card-header">Browse Clubs</div>
                 <div class="card-body">
                     <p>Discover and join clubs that interest you.</p>
-                    <a href="clubs.php" class="btn btn-primary btn-block">View Clubs</a>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">My Clubs</div>
-                <div class="card-body">
-                    <p>View clubs you've joined and your membership status.</p>
-                    <a href="joined_clubs.php" class="btn btn-primary btn-block">My Clubs</a>
+                    <a href="view_clubs.php" class="btn btn-primary btn-block">View Clubs</a>
                 </div>
             </div>
 
