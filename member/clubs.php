@@ -46,7 +46,7 @@ if ($isMember && isset($_POST['join_club'])) {
 }
 
 // Pagination setup
-$limit = 3;   // Clubs per page
+$limit = 6;   // Clubs per page
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
 $offset = ($page - 1) * $limit;
 
@@ -91,8 +91,18 @@ if ($isMember) {
 <div class="card">
 
     <?php if (!empty($club['logo'])): ?>
-        <img src="<?= htmlspecialchars($club['logo']) ?>" alt="Club logo" class="card-img-top mb-3" style="height: 180px; object-fit: cover;">
-    <?php endif; ?>
+    <img src="<?= htmlspecialchars($club['logo']) ?>" 
+         alt="Club logo" 
+         class="card-img-top mb-3" 
+         style="height: 180px; object-fit: cover;"
+         onerror="this.onerror=null;this.src='../includes/images/default_img.jpeg';">
+<?php else: ?>
+    <img src="../includes/images/default_img.jpeg" 
+         alt="Default club logo" 
+         class="card-img-top mb-3" 
+         style="height: 180px; object-fit: cover;">
+<?php endif; ?>
+>
 
     <h3 class="card-header"><?= htmlspecialchars($club['name']) ?></h3>
     <p class="text-muted mb-3"><?= htmlspecialchars($club['description']) ?></p>
@@ -140,6 +150,7 @@ if ($isMember) {
   <?php endif; ?>
 
   <div style="flex: 1;"></div>
+
 
   <?php if ($page < $totalPages): ?>
     <a href="?page=<?= $page + 1 ?>" class="btn btn-outline">Next →</a>

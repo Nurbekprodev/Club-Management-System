@@ -9,11 +9,9 @@ if (!isset($_GET['id'])) {
 }
 
 $club_id = intval($_GET['id']);
-
 $member_id = $_SESSION['user_id'] ?? null;
 $role = $_SESSION['role'] ?? null;
-
-$success = ""; // success message holder
+$success = "";
 
 // =====================
 // FETCH CLUB DETAILS
@@ -51,7 +49,6 @@ if ($member_id && $role === "member") {
 // JOIN CLUB
 // =====================
 if (isset($_POST['join_club']) && $member_id && $role === "member") {
-    // Verify CSRF token
     if (!isset($_POST['csrf_token']) || !verifyCSRFToken($_POST['csrf_token'])) {
         die("CSRF token validation failed.");
     }
@@ -67,7 +64,6 @@ if (isset($_POST['join_club']) && $member_id && $role === "member") {
 // LEAVE CLUB
 // =====================
 if (isset($_POST['leave_club']) && $membership_status === "approved") {
-    // Verify CSRF token
     if (!isset($_POST['csrf_token']) || !verifyCSRFToken($_POST['csrf_token'])) {
         die("CSRF token validation failed.");
     }
@@ -77,33 +73,29 @@ if (isset($_POST['leave_club']) && $membership_status === "approved") {
     $leave->execute();
 
     $success = "You left the club.";
-    $membership_status = ""; // reset display
+    $membership_status = "";
 }
 
 // =====================
-// REGISTER EVENT (Send Request)
+// REGISTER EVENT
 // =====================
 if (isset($_POST['register_event_id']) && $member_id && $role === "member") {
-    // Verify CSRF token
     if (!isset($_POST['csrf_token']) || !verifyCSRFToken($_POST['csrf_token'])) {
         die("CSRF token validation failed.");
     }
     
-    // Check if user is an approved member of this club
     if ($membership_status !== "approved") {
         die("You must be an approved member of this club to register for events.");
     }
     
     $eid = intval($_POST['register_event_id']);
 
-    // Check for existing registration
     $check = $connection->prepare("SELECT id, status FROM event_registrations WHERE event_id=? AND member_id=?");
     $check->bind_param("ii", $eid, $member_id);
     $check->execute();
     $existing = $check->get_result();
 
     if ($existing->num_rows == 0) {
-        // New registration request with pending status
         $reg = $connection->prepare("INSERT INTO event_registrations (event_id, member_id, status, registered_at) VALUES (?, ?, 'pending', NOW())");
         $reg->bind_param("ii", $eid, $member_id);
         $reg->execute();
@@ -115,7 +107,6 @@ if (isset($_POST['register_event_id']) && $member_id && $role === "member") {
         } elseif ($row['status'] === 'approved') {
             $success = "You are already registered for this event.";
         } else {
-            // Resend rejected request
             $resend = $connection->prepare("UPDATE event_registrations SET status='pending', registered_at=NOW() WHERE id=?");
             $resend->bind_param("i", $row['id']);
             $resend->execute();
@@ -128,7 +119,6 @@ if (isset($_POST['register_event_id']) && $member_id && $role === "member") {
 // LEAVE EVENT
 // =====================
 if (isset($_POST['leave_event_id']) && $member_id && $role === "member") {
-    // Verify CSRF token
     if (!isset($_POST['csrf_token']) || !verifyCSRFToken($_POST['csrf_token'])) {
         die("CSRF token validation failed.");
     }
@@ -155,14 +145,13 @@ $cs->execute();
 $totalEvents = $cs->get_result()->fetch_assoc()['total'];
 $totalPages = ceil($totalEvents / $limit);
 
-// Fetch events
 $eventSql = "SELECT * FROM events WHERE club_id=? ORDER BY date ASC LIMIT ?, ?";
 $ev = $connection->prepare($eventSql);
 $ev->bind_param("iii", $club_id, $offset, $limit);
 $ev->execute();
 $events = $ev->get_result();
-
 ?>
+
 <main>
 <div class="container mt-4">
 
@@ -179,11 +168,11 @@ $events = $ev->get_result();
     <!-- LEFT: Club Information -->
     <div class="club-info">
 
-        <?php if ($club['logo']): ?>
-            <img src="<?= htmlspecialchars($club['logo']) ?>" 
-                 alt="Club logo" 
-                 class="club-banner">
-        <?php endif; ?>
+        <!-- Club Logo with fallback -->
+        <img src="<?= !empty($club['logo']) ? htmlspecialchars($club['logo']) : '../includes/images/default_img.jpeg' ?>" 
+             alt="Club Logo" 
+             class="club-banner"
+             onerror="this.onerror=null;this.src='../includes/images/default_img.jpeg';">
 
         <h2 class="club-title"><?= htmlspecialchars($club['name']) ?></h2>
 
@@ -204,31 +193,25 @@ $events = $ev->get_result();
 
             <?php if (!$member_id || $role !== "member"): ?>
                 <p class="text-muted">Login as a member to join this club.</p>
-
             <?php else: ?>
-
                 <?php if ($membership_status === "approved"): ?>
                     <p class="badge badge-success mb-3">✓ You are a member</p>
                     <form method="POST">
                         <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                         <button type="submit" name="leave_club" class="btn btn-danger">Leave Club</button>
                     </form>
-
                 <?php elseif ($membership_status === "pending"): ?>
                     <p class="badge badge-warning">⏳ Request pending</p>
-
                 <?php else: ?>
                     <form method="POST">
                         <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                         <button type="submit" name="join_club" class="btn btn-primary">Join Club</button>
                     </form>
                 <?php endif; ?>
-
             <?php endif; ?>
         </div>
 
     </div>
-
 
     <!-- RIGHT: Events Section -->
     <div class="club-events">
@@ -237,18 +220,17 @@ $events = $ev->get_result();
 
         <?php if ($events->num_rows === 0): ?>
             <div class="card text-center text-muted">No events yet.</div>
-
         <?php else: ?>
             <div class="event-list">
 
                 <?php while ($e = $events->fetch_assoc()): ?>
                     <div class="event-card">
 
-                        <?php if (!empty($e['event_image'])): ?>
-                            <img src="<?= htmlspecialchars($e['event_image']) ?>" 
-                                 class="event-image" 
-                                 alt="Event">
-                        <?php endif; ?>
+                        <!-- Event Image with fallback -->
+                        <img src="<?= !empty($e['event_image']) ? htmlspecialchars($e['event_image']) : '../includes/images/default_event.jpeg' ?>" 
+                             class="event-image" 
+                             alt="Event"
+                             onerror="this.onerror=null;this.src='../includes/images/default_event.jpeg';">
 
                         <h4 class="event-title"><?= htmlspecialchars($e['title']) ?></h4>
                         <p class="event-desc text-muted"><?= nl2br(htmlspecialchars($e['description'])) ?></p>
@@ -260,7 +242,7 @@ $events = $ev->get_result();
                             <p class="text-muted" style="font-size: 12px;">Max: <?= $e['max_participants'] ?> participants</p>
                         </div>
 
-                        <!-- Registration Logic (unchanged) -->
+                        <!-- Registration Logic -->
                         <?php
                         $event_id = $e['id'];
                         $check = $connection->prepare("SELECT id, status FROM event_registrations WHERE event_id=? AND member_id=?");
@@ -282,10 +264,8 @@ $events = $ev->get_result();
                                     <input type="hidden" name="leave_event_id" value="<?= $event_id ?>">
                                     <button class="btn btn-danger">Leave</button>
                                 </form>
-
                             <?php elseif ($registration_status === "pending"): ?>
                                 <span class="badge badge-warning">⏳ Pending</span>
-
                             <?php elseif ($registration_status === "rejected"): ?>
                                 <span class="badge badge-danger">Rejected</span>
                                 <form method="POST" class="ml-auto">
@@ -293,14 +273,12 @@ $events = $ev->get_result();
                                     <input type="hidden" name="register_event_id" value="<?= $event_id ?>">
                                     <button class="btn btn-primary">Request Again</button>
                                 </form>
-
                             <?php elseif ($member_id && $role === "member" && $membership_status === "approved"): ?>
                                 <form method="POST">
                                     <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                                     <input type="hidden" name="register_event_id" value="<?= $event_id ?>">
                                     <button class="btn btn-primary">Request Registration</button>
                                 </form>
-
                             <?php else: ?>
                                 <span class="text-muted">Login or become approved member</span>
                             <?php endif; ?>
@@ -326,9 +304,7 @@ $events = $ev->get_result();
     </div>
 
 </div>
-
 </div>
 </main>
-
 
 <?php include '../includes/footer.php'; ?>

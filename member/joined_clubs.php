@@ -47,8 +47,18 @@ $res = $stmt->get_result();
         <div class="card">
 
             <?php if (!empty($club['logo'])): ?>
-                <img src="<?= htmlspecialchars($club['logo']) ?>" alt="Club logo" class="card-img-top mb-3" style="height: 180px; object-fit: cover;">
-            <?php endif; ?>
+    <img src="<?= htmlspecialchars($club['logo']) ?>" 
+         alt="Club logo" 
+         class="card-img-top mb-3" 
+         style="height: 180px; object-fit: cover;"
+         onerror="this.onerror=null;this.src='../includes/images/default_img.jpeg';">
+<?php else: ?>
+    <img src="../includes/images/default_img.jpeg" 
+         alt="Default club logo" 
+         class="card-img-top mb-3" 
+         style="height: 180px; object-fit: cover;">
+<?php endif; ?>
+
 
             <h3 class="card-header"><?= htmlspecialchars($club['name']) ?></h3>
             <p class="text-muted mb-3"><?= htmlspecialchars($club['description']) ?></p>
