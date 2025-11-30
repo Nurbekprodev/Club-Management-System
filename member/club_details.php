@@ -227,7 +227,7 @@ $events = $ev->get_result();
                 <div class="card">
 
                     <!-- Event Image -->
-                   <img src="<?= !empty($e['event_image']) ? $e['event_image'] : '../includes/images/default_img.jpeg' ?>"
+                   <img src="<?= !empty($e['event_image']) ? $e['event_image'] : '..\includes\images\default_img.jpeg' ?>"
                          class="card-img-top"
                          alt="Event Image">
 

@@ -33,7 +33,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <?php if (!$is_logged_in): ?>
                     <!-- Visitor Navigation -->
                     <li><a href="../public/login.php" class="nav-link">Home</a></li>
-                    <li><a href="../member/clubs.php" class="nav-link">Browse Clubs</a></li>
+                    <li><a href="../member/view_clubs.php" class="nav-link">Browse Clubs</a></li>
                     <li><a href="../member/view_events.php" class="nav-link">Browse Events</a></li>
                     
 
@@ -42,6 +42,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     <li><a href="../member/dashboard.php" class="nav-link <?php echo $current_page === 'dashboard.php' ? 'active' : ''; ?>">Dashboard</a></li>
                     <li><a href="../member/view_clubs.php" class="nav-link <?php echo $current_page === 'clubs.php' ? 'active' : ''; ?>">Browse Clubs</a></li>
                     <li><a href="../member/view_events.php" class="nav-link <?php echo $current_page === 'view_events.php' ? 'active' : ''; ?>">Browse Events</a></li>
+                    <li><a href="profile.php" class="nav-link <?php echo $current_page === 'request_role.php' ? 'active' : ''; ?>">Profile</a></li>
 
                 <?php elseif ($user_role === 'clubadmin'): ?>
                     <!-- Club Admin Navigation -->
@@ -49,6 +50,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     <li><a href="../clubadmin/manage_clubs.php" class="nav-link <?php echo $current_page === 'manage_clubs.php' ? 'active' : ''; ?>">My Clubs</a></li>
                     <li><a href="../clubadmin/manage_events.php" class="nav-link <?php echo $current_page === 'manage_events.php' ? 'active' : ''; ?>">My Events</a></li>
                     <li><a href="../clubadmin/manage_requests.php" class="nav-link <?php echo $current_page === 'manage_requests.php' ? 'active' : ''; ?>">Requests</a></li>
+                    <li><a href="profile.php" class="nav-link <?php echo $current_page === 'profile.php' ? 'active' : ''; ?>">Profile</a></li>
 
                 <?php elseif ($user_role === 'superadmin'): ?>
                     <!-- Superadmin Navigation -->

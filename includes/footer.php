@@ -46,7 +46,7 @@
         <div class="footer-section">
             <h4>Contact</h4>
             <p>
-                Email: <a href="mailto:info@clubhub.com">info@clubhub.com</a><br>
+                Email: <a href="mailto:info@clubhub.com">info@ClubWeave.com</a><br>
                 Phone: <a href="tel:+1234567890">+1 (234) 567-890</a>
             </p>
         </div>
