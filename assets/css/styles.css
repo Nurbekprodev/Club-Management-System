@@ -896,3 +896,57 @@ td {
 }
 
 
+/* ===== New Styles for Profile Page ===== */
+
+/* Center profile picture and set size */
+.profile-image {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: var(--radius-pill);
+    display: block;
+    margin: 0 auto 20px auto; /* center + spacing below */
+}
+
+/* Ensure all links in profile wrap properly */
+.profile-link {
+    word-break: break-word;
+}
+
+/* Handle long bio without overflowing */
+.bio-text {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+}
+
+/* Profile info spacing */
+.profile-info {
+    margin-bottom: 16px;
+}
+
+/* Center action buttons */
+.profile-actions {
+    margin-top: 24px;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Responsive tweaks */
+@media (max-width: 600px) {
+    .profile-image {
+        width: 120px;
+        height: 120px;
+        margin-bottom: 16px;
+    }
+
+    .profile-info {
+        margin-bottom: 12px;
+    }
+
+    .profile-actions {
+        flex-direction: column;
+        gap: 12px;
+    }
+}

@@ -54,60 +54,60 @@ if (!empty($_FILES['profile_picture']['name'])) {
             <div class="card-body">
 
                 <!-- Profile Picture -->
-                <img src="<?= htmlspecialchars($profile_picture_path) ?>" 
+                <img src="<?= sanitizeInput($profile_picture_path) ?>" 
                     alt="Profile Picture" 
                     class="profile-image">
 
                     
 
                 <!-- Full Name -->
-                <div class="mb-3">
+                <div class="profile-info">
                     <strong>Full Name:</strong>
-                    <p class="text-muted"><?= htmlspecialchars($profile['full_name']) ?></p>
+                    <p class="text-muted"><?= sanitizeInput($profile['full_name']) ?></p>
                 </div>
 
                 <div class="mb-3">
                     <strong>Department:</strong>
-                    <p class="text-muted"><?= htmlspecialchars($profile['department']) ?></p>
+                    <p class="text-muted"><?= sanitizeInput($profile['department']) ?></p>
                 </div>
 
                 <div class="mb-3">
                     <strong>Year of Study:</strong>
-                    <p class="text-muted"><?= htmlspecialchars($profile['year_of_study']) ?></p>
+                    <p class="text-muted"><?= sanitizeInput($profile['year_of_study']) ?></p>
                 </div>
 
                 <div class="mb-3">
                     <strong>Phone:</strong>
-                    <p class="text-muted"><?= htmlspecialchars($profile['phone']) ?></p>
+                    <p class="text-muted"><?= sanitizeInput($profile['phone']) ?></p>
                 </div>
 
                 <div class="mb-3">
                     <strong>Date of Birth:</strong>
-                    <p class="text-muted"><?= htmlspecialchars($profile['dob']) ?></p>
+                    <p class="text-muted"><?= sanitizeInput($profile['dob']) ?></p>
                 </div>
 
                 <div class="mb-3">
                     <strong>Address:</strong>
-                    <p class="text-muted"><?= htmlspecialchars($profile['address']) ?></p>
+                    <p class="text-muted"><?= sanitizeInput($profile['address']) ?></p>
                 </div>
 
                 <?php if (!empty($profile['linkedin'])): ?>
                 <div class="mb-3">
                     <strong>LinkedIn:</strong>
-                    <p class="text-muted">
-                        <a href="<?= htmlspecialchars($profile['linkedin']) ?>" target="_blank">
-                            <?= htmlspecialchars($profile['linkedin']) ?>
-                        </a>
-                    </p>
+                <p class="text-muted profile-link">
+                    <a href="<?= sanitizeInput($profile['linkedin']) ?>" target="_blank">
+                        <?= sanitizeInput($profile['linkedin']) ?>
+                    </a>
+                </p>
                 </div>
                 <?php endif; ?>
 
                 <?php if (!empty($profile['instagram'])): ?>
-                <div class="mb-3">
+                <div class="text-muted profile-link">
                     <strong>Instagram:</strong>
                     <p class="text-muted">
-                        <a href="<?= htmlspecialchars($profile['instagram']) ?>" target="_blank">
-                            <?= htmlspecialchars($profile['instagram']) ?>
+                        <a href="<?= sanitizeInput($profile['instagram']) ?>" target="_blank">
+                            <?= sanitizeInput($profile['instagram']) ?>
                         </a>
                     </p>
                 </div>
@@ -116,14 +116,15 @@ if (!empty($_FILES['profile_picture']['name'])) {
                 <?php if (!empty($profile['skills'])): ?>
                 <div class="mb-3">
                     <strong>Skills:</strong>
-                    <p class="text-muted"><?= htmlspecialchars($profile['skills']) ?></p>
+                    <p class="text-muted"><?= sanitizeInput($profile['skills']) ?></p>
                 </div>
                 <?php endif; ?>
 
-                <div class="mb-3">
+                <div class="profile-info">
                     <strong>Bio:</strong>
-                    <p class="text-muted"><?= nl2br(htmlspecialchars($profile['bio'])) ?></p>
+                    <p class="text-muted bio-text"><?= nl2br(sanitizeInput($profile['bio'])) ?></p>
                 </div>
+
 
                 <!-- Action Buttons -->
                 <div class="profile-actions" style="margin-top: 20px;">
