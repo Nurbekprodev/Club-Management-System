@@ -150,6 +150,12 @@ $ev = $connection->prepare($eventSql);
 $ev->bind_param("iii", $club_id, $offset, $limit);
 $ev->execute();
 $events = $ev->get_result();
+
+
+// picture path
+$club_logo_path = !empty($club['logo']) && file_exists("../uploads/club_images/" . $club['logo'])
+    ? "../uploads/club_images/" . $club['logo']
+    : "../uploads/club_images/default_club.jpg";
 ?>
 
 <main>
@@ -169,7 +175,7 @@ $events = $ev->get_result();
     <div class="club-info">
 
         <!-- Club Logo with fallback -->
-        <img src="<?= !empty($club['logo']) ? htmlspecialchars($club['logo']) : '../includes/images/default_img.jpeg' ?>" 
+        <img src="<?= htmlspecialchars($club_logo_path) ?>"
              alt="Club Logo" 
              class="club-banner"
              onerror="this.onerror=null;this.src='../includes/images/default_img.jpeg';">
@@ -229,7 +235,8 @@ $events = $ev->get_result();
                     <!-- Event Image -->
                    <img src="<?= !empty($e['event_image']) ? $e['event_image'] : '..\includes\images\default_img.jpeg' ?>"
                          class="card-img-top"
-                         alt="Event Image">
+                         alt="Event Image"
+                          style="height:180px; object-fit:cover; border-radius:4px;">
 
                     <h4 class="card-header"><?= htmlspecialchars($e['title']) ?></h4>
 

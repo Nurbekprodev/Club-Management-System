@@ -54,30 +54,39 @@ if (isset($_POST['create_event'])) {
 
     $event_image = null;
 
-    // Handle image upload
-    if (!empty($_FILES['event_image']['name'])) {
-        $upload_error = validateImageUpload($_FILES['event_image']);
-        if (!empty($upload_error)) {
-            setError($upload_error);
-            header("Location: create_event.php");
-            exit();
-        }
-        
-        $target_dir = "../includes/images/";
-        
-        if (!is_dir($target_dir)) {
-            mkdir($target_dir, 0777, true);
-        }
-        
-        $file_extension = pathinfo($_FILES['event_image']['name'], PATHINFO_EXTENSION);
-        $safe_filename = bin2hex(random_bytes(8)) . '.' . $file_extension;
-        $event_image = $target_dir . $safe_filename;
-        if (!move_uploaded_file($_FILES['event_image']['tmp_name'], $event_image)) {
-            setError("Failed to upload image");
-            header("Location: create_event.php");
-            exit();
-        }
+// Handle image upload
+if (!empty($_FILES['event_image']['name'])) {
+    // Validate the image
+    $upload_error = validateImageUpload($_FILES['event_image']);
+    if (!empty($upload_error)) {
+        setError($upload_error);
+        header("Location: create_event.php");
+        exit();
     }
+
+    // Upload directory
+    $upload_dir = "../uploads/event_images/";
+    if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
+
+    // Safe unique filename
+    $file_extension = pathinfo($_FILES['event_image']['name'], PATHINFO_EXTENSION);
+    $safe_filename = bin2hex(random_bytes(8)) . '.' . $file_extension;
+    $target_path = $upload_dir . $safe_filename;
+
+    if (move_uploaded_file($_FILES['event_image']['tmp_name'], $target_path)) {
+        $event_image = $target_path;
+    } else {
+        setError("Failed to upload image");
+        header("Location: create_event.php");
+        exit();
+    }
+}
+
+// Fallback if no image
+$event_image = !empty($event_image) && file_exists($event_image)
+    ? $event_image
+    : "../uploads/event_images/default_event.jpeg";
+
 
     // Insert new event
     $sql = "INSERT INTO events 

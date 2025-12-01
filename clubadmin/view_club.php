@@ -29,6 +29,11 @@ if ($result->num_rows === 0) {
 }
 
 $club = $result->fetch_assoc();
+
+// Determine club logo path
+$club_logo_path = !empty($club['logo']) && file_exists($club['logo'])
+    ? $club['logo']
+    : '../uploads/club_images/default_club.jpg';
 ?>
 
 <main>
@@ -39,9 +44,9 @@ $club = $result->fetch_assoc();
         <div class="card">
             <div class="card-header">Club Details</div>
             <div class="card-body">
-                <?php if (!empty($club['logo'])): ?>
-                    <img src="<?= $club['logo'] ?>" alt="Club Logo" style="width: 100%; max-width: 400px; border-radius: 8px; margin-bottom: 20px; object-fit: cover;">
-                <?php endif; ?>
+                
+                <img src="<?= $club_logo_path ?>" alt="Club Logo" style="width: 100%; max-width: 400px; border-radius: 8px; margin-bottom: 20px; object-fit: cover;">
+                
 
                 <div class="mb-3">
                     <strong>Name:</strong>

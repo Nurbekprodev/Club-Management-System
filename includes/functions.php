@@ -395,3 +395,91 @@ function validateForm($fields) {
     return $errors;
 }
 
+function uploadAndResizeImage($file, $uploadDir, $maxSizeMB = 5)
+{
+    // Allowed MIME types
+    $allowedTypes = [
+        'image/jpeg' => 'jpg',
+        'image/png'  => 'png',
+        'image/webp' => 'webp'
+    ];
+
+    // Validate file uploaded
+    if ($file['error'] !== UPLOAD_ERR_OK) {
+        return false;
+    }
+
+    // Check file size (MB → bytes)
+    if ($file['size'] > ($maxSizeMB * 1024 * 1024)) {
+        return false;
+    }
+
+    // Detect MIME type using finfo (very secure)
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mimeType = finfo_file($finfo, $file['tmp_name']);
+    finfo_close($finfo);
+
+    // Validate MIME type
+    if (!array_key_exists($mimeType, $allowedTypes)) {
+        return false; // ❌ Not an allowed image type
+    }
+
+    // Unique file name
+    $extension = $allowedTypes[$mimeType];
+    $newName = uniqid("img_", true) . "." . $extension;
+
+    $finalPath = $uploadDir . $newName;
+
+    // Resize → Safe GD image processing
+    resizeImage($file['tmp_name'], $finalPath, 500, 500); // MAX 500x500
+
+    return $newName;
+}
+
+
+function resizeImage($srcFile, $destFile, $maxWidth, $maxHeight)
+{
+    list($origWidth, $origHeight, $type) = getimagesize($srcFile);
+
+    // Maintain aspect ratio
+    $ratio = min($maxWidth / $origWidth, $maxHeight / $origHeight);
+    $newWidth  = (int)($origWidth * $ratio);
+    $newHeight = (int)($origHeight * $ratio);
+
+    $image_p = imagecreatetruecolor($newWidth, $newHeight);
+
+    switch ($type) {
+        case IMAGETYPE_JPEG:
+            $image = imagecreatefromjpeg($srcFile);
+            break;
+        case IMAGETYPE_PNG:
+            $image = imagecreatefrompng($srcFile);
+            imagealphablending($image_p, false);
+            imagesavealpha($image_p, true);
+            break;
+        case IMAGETYPE_WEBP:
+            $image = imagecreatefromwebp($srcFile);
+            break;
+        default:
+            return false;
+    }
+
+    imagecopyresampled($image_p, $image, 0, 0, 0, 0,
+                       $newWidth, $newHeight,
+                       $origWidth, $origHeight);
+
+    // Save final resized image
+    switch ($type) {
+        case IMAGETYPE_JPEG:
+            imagejpeg($image_p, $destFile, 90);
+            break;
+        case IMAGETYPE_PNG:
+            imagepng($image_p, $destFile, 8);
+            break;
+        case IMAGETYPE_WEBP:
+            imagewebp($image_p, $destFile, 90);
+            break;
+    }
+
+    return true;
+}

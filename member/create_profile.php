@@ -63,75 +63,87 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
-<main class="profile-container">
-    <div class="profile-card">
+<main>
+<div class="container mt-4">
+    <div style="max-width: 500px; margin: 0 auto;">
 
-        <h3>Create Your Profile</h3>
+        <a href="dashboard.php" class="btn btn-ghost mb-3">← Back</a>
 
-        <?php displayMessages(); ?>
+        <div class="card">
+            <div class="card-header">Create Your Profile</div>
+            <div class="card-body">
 
-        <form method="POST" enctype="multipart/form-data">
+                <!-- <?php displayMessages(); ?> -->
 
-            <div class="form-group mb-3">
-                <label>Full Name *</label>
-                <input type="text" name="full_name" class="form-control" required>
+                <form method="POST" enctype="multipart/form-data">
+
+                    <div class="form-group">
+                        <label for="full_name" style="display:block; margin-bottom: 6px; font-weight: 600;">Full Name *</label>
+                        <input type="text" id="full_name" name="full_name" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="department" style="display:block; margin-bottom: 6px; font-weight: 600;">Department</label>
+                        <input type="text" id="department" name="department" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="year_of_study" style="display:block; margin-bottom: 6px; font-weight: 600;">Year of Study</label>
+                        <input type="text" id="year_of_study" name="year_of_study" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone" style="display:block; margin-bottom: 6px; font-weight: 600;">Phone</label>
+                        <input type="text" id="phone" name="phone" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dob" style="display:block; margin-bottom: 6px; font-weight: 600;">Date of Birth</label>
+                        <input type="date" id="dob" name="dob" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="address" style="display:block; margin-bottom: 6px; font-weight: 600;">Address</label>
+                        <input type="text" id="address" name="address" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="linkedin" style="display:block; margin-bottom: 6px; font-weight: 600;">LinkedIn</label>
+                        <input type="url" id="linkedin" name="linkedin" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="instagram" style="display:block; margin-bottom: 6px; font-weight: 600;">Instagram</label>
+                        <input type="url" id="instagram" name="instagram" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="skills" style="display:block; margin-bottom: 6px; font-weight: 600;">Skills</label>
+                        <input type="text" id="skills" name="skills" class="form-control" placeholder="Comma separated">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="bio" style="display:block; margin-bottom: 6px; font-weight: 600;">Bio</label>
+                        <textarea id="bio" name="bio" class="form-control" rows="4"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="profile_picture" style="display:block; margin-bottom: 6px; font-weight: 600;">Profile Picture</label>
+                        <input type="file" id="profile_picture" name="profile_picture" class="form-control" accept="image/*">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 12px;">
+                        Create Profile
+                    </button>
+
+                </form>
+
             </div>
-
-            <div class="form-group mb-3">
-                <label>Department</label>
-                <input type="text" name="department" class="form-control">
-            </div>
-
-            <div class="form-group mb-3">
-                <label>Year of Study</label>
-                <input type="text" name="year_of_study" class="form-control">
-            </div>
-
-            <div class="form-group mb-3">
-                <label>Phone</label>
-                <input type="text" name="phone" class="form-control">
-            </div>
-
-            <div class="form-group mb-3">
-                <label>Date of Birth</label>
-                <input type="date" name="dob" class="form-control">
-            </div>
-
-            <div class="form-group mb-3">
-                <label>Address</label>
-                <input type="text" name="address" class="form-control">
-            </div>
-
-            <div class="form-group mb-3">
-                <label>LinkedIn</label>
-                <input type="url" name="linkedin" class="form-control">
-            </div>
-
-            <div class="form-group mb-3">
-                <label>Instagram</label>
-                <input type="url" name="instagram" class="form-control">
-            </div>
-
-            <div class="form-group mb-3">
-                <label>Skills</label>
-                <input type="text" name="skills" class="form-control" placeholder="Comma separated">
-            </div>
-
-            <div class="form-group mb-3">
-                <label>Bio</label>
-                <textarea name="bio" rows="4" class="form-control"></textarea>
-            </div>
-
-            <div class="form-group mb-3">
-                <label>Profile Picture</label>
-                <input type="file" name="profile_picture" class="form-control">
-            </div>
-
-            <button type="submit" class="btn btn-success">Create Profile</button>
-
-        </form>
+        </div>
 
     </div>
+</div>
 </main>
+
 
 <?php include '../includes/footer.php'; ?>

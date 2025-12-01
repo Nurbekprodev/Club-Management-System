@@ -168,32 +168,41 @@ $events = $stmt->get_result();
 <?php else: ?>
   <div class="grid-cards">
     <?php while ($e = $events->fetch_assoc()): ?>
-      <div class="card">
+        <div class="card">
 
-        <!-- Event Image -->
-        <img src="<?= !empty($e['event_image']) ? $e['event_image'] : '../includes/images/default_img.jpeg' ?>"
-             class="event-image" 
+            <!-- Event Image -->
+            <?php
+                $event_image_path = !empty($e['event_image']) && file_exists("../uploads/event_images/" . $e['event_image'])
+                    ? "../uploads/event_images/" . $e['event_image']
+                    : "../uploads/event_images/default_event.jpeg";
+            ?>
+            <img src="<?= htmlspecialchars($event_image_path) ?>" 
+                 alt="<?= htmlspecialchars($e['title']) ?>" 
+                 class="card-img-top mb-2" 
+                 style="height:180px; object-fit:cover; border-radius:4px;"
+                 onerror="this.onerror=null;this.src='../uploads/event_images/default_event.jpeg';">
 
-        <h4 class="card-header"><?= htmlspecialchars($e['title']) ?></h4>
+            <h4 class="card-header"><?= htmlspecialchars($e['title']) ?></h4>
 
-        <p class="text-muted mb-2 small">
-          <strong>Club:</strong>
-          <a href="club_details.php?id=<?= $e['club_id'] ?>">
-            <?= htmlspecialchars($e['club_name']) ?>
-          </a>
-        </p>
+            <p class="text-muted mb-2 small">
+                <strong>Club:</strong>
+                <a href="club_details.php?id=<?= $e['club_id'] ?>">
+                    <?= htmlspecialchars($e['club_name']) ?>
+                </a>
+            </p>
 
-        <p class="text-muted"><?= nl2br(htmlspecialchars(substr($e['description'], 0, 120))) ?>...</p>
+            <p class="text-muted"><?= nl2br(htmlspecialchars(substr($e['description'], 0, 120))) ?>...</p>
 
-        <p class="small">
-          📅 <?= $e['date'] ?> @ <?= $e['event_time'] ?><br>
-          📍 <?= htmlspecialchars($e['venue']) ?><br>
-          ⏳ Deadline: <?= htmlspecialchars($e['registration_deadline']) ?>
-        </p>
+            <p class="small">
+                📅 <?= $e['date'] ?> @ <?= $e['event_time'] ?><br>
+                📍 <?= htmlspecialchars($e['venue']) ?><br>
+                ⏳ Deadline: <?= htmlspecialchars($e['registration_deadline']) ?>
+            </p>
 
-      </div>
+        </div>
     <?php endwhile; ?>
-  </div>
+</div>
+
 
 <!-- Pagination -->
 <div class="pagination flex gap-2 mt-4 justify-center items-center">

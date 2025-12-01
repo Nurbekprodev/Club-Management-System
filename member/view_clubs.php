@@ -74,6 +74,13 @@ if ($isMember) {
         $club_status[$r['club_id']] = $r['status'];
     }
 }
+
+// picture path
+$club_logo_path = !empty($club['logo']) && file_exists("../uploads/club_images/" . $club['logo'])
+    ? "../uploads/club_images/" . $club['logo']
+    : "../uploads/club_images/default_club.jpg";
+
+
 ?>
 
 <main>
@@ -129,11 +136,10 @@ if ($isMember) {
 <?php while($club = $clubsResult->fetch_assoc()): ?>
 <div class="card">
 
-    <img src="<?= !empty($club['logo']) ? htmlspecialchars($club['logo']) : '../includes/images/default_img.jpeg' ?>"
-         alt="Club logo" 
-         class="card-img-top mb-3" 
-         style="height: 180px; object-fit: cover;"
-         onerror="this.onerror=null;this.src='../includes/images/default_img.jpeg';">
+     <img src="<?= htmlspecialchars($club_logo_path) ?>"
+                     alt="<?= htmlspecialchars($club['name']) ?> Logo"
+                     class="card-img-top mb-2"
+                     style="height:180px; object-fit:cover; border-radius:4px;">
 
     <h3 class="card-header"><?= htmlspecialchars($club['name']) ?></h3>
     <p class="text-muted mb-3"><?= htmlspecialchars($club['description']) ?></p>

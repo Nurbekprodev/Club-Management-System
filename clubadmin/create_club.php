@@ -43,20 +43,30 @@ if (isset($_POST['create_club'])) {
     }
 
     // Handle file upload
-    $logo = null;
-    if (!empty($_FILES['logo']['name'])) {
-        $upload_error = validateImageUpload($_FILES['logo']);
-        if (!empty($upload_error)) {
-            setError($upload_error);
-            header("Location: create_club.php");
-            exit();
-        }
-        
-        $file_extension = pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION);
-        $safe_filename = bin2hex(random_bytes(8)) . '.' . $file_extension;
-        $logo = '../includes/images/' . $safe_filename;
-        move_uploaded_file($_FILES['logo']['tmp_name'], $logo);
+$logo = null;
+
+if (!empty($_FILES['logo']['name'])) {
+    // Validate image
+    $upload_error = validateImageUpload($_FILES['logo']);
+    if (!empty($upload_error)) {
+        setError($upload_error);
+        header("Location: create_club.php");
+        exit();
     }
+
+    // Upload & resize image using your existing function
+    $uploadDir = "../uploads/club_images/"; // consistent upload folder
+    $newImage = uploadAndResizeImage($_FILES['logo'], $uploadDir, 180, 180); // width, height optional
+
+    if ($newImage) {
+        $logo = $newImage;
+    } else {
+        setError("Failed to upload or resize the logo.");
+        header("Location: create_club.php");
+        exit();
+    }
+}
+
 
     $stmt = $connection->prepare("INSERT INTO clubs 
         (name, description, category, location, contact_email, contact_phone, logo, founded_year, created_by, created_at) 
@@ -90,37 +100,37 @@ if (isset($_POST['create_club'])) {
 
                     <div class="form-group">
                         <label for="club_name" style="display:block; margin-bottom: 6px; font-weight: 600;">Club Name</label>
-                        <input type="text" id="club_name" name="club_name" class="form-control" value="<?php echo htmlspecialchars($club_name); ?>" required>
+                        <input type="text" id="club_name" name="club_name" class="form-control" value="<?php echo sanitizeInput($club_name); ?>" required>
                     </div>
 
                     <div class="form-group">
                         <label for="description" style="display:block; margin-bottom: 6px; font-weight: 600;">Description</label>
-                        <textarea id="description" name="description" class="form-control" rows="4" required><?php echo htmlspecialchars($description); ?></textarea>
+                        <textarea id="description" name="description" class="form-control" rows="4" required><?php echo sanitizeInput($description); ?></textarea>
                     </div>
 
                     <div class="form-group">
                         <label for="category" style="display:block; margin-bottom: 6px; font-weight: 600;">Category</label>
-                        <input type="text" id="category" name="category" class="form-control" value="<?php echo htmlspecialchars($category); ?>" placeholder="e.g., Sports, Arts, Tech" required>
+                        <input type="text" id="category" name="category" class="form-control" value="<?php echo sanitizeInput($category); ?>" placeholder="e.g., Sports, Arts, Tech" required>
                     </div>
 
                     <div class="form-group">
                         <label for="location" style="display:block; margin-bottom: 6px; font-weight: 600;">Location</label>
-                        <input type="text" id="location" name="location" class="form-control" value="<?php echo htmlspecialchars($location); ?>" required>
+                        <input type="text" id="location" name="location" class="form-control" value="<?php echo sanitizeInput($location); ?>" required>
                     </div>
 
                     <div class="form-group">
                         <label for="contact_email" style="display:block; margin-bottom: 6px; font-weight: 600;">Contact Email</label>
-                        <input type="email" id="contact_email" name="contact_email" class="form-control" value="<?php echo htmlspecialchars($contact_email); ?>" required>
+                        <input type="email" id="contact_email" name="contact_email" class="form-control" value="<?php echo sanitizeInput($contact_email); ?>" required>
                     </div>
 
                     <div class="form-group">
                         <label for="contact_phone" style="display:block; margin-bottom: 6px; font-weight: 600;">Contact Phone</label>
-                        <input type="tel" id="contact_phone" name="contact_phone" class="form-control" value="<?php echo htmlspecialchars($contact_phone); ?>" required>
+                        <input type="tel" id="contact_phone" name="contact_phone" class="form-control" value="<?php echo sanitizeInput($contact_phone); ?>" required>
                     </div>
 
                     <div class="form-group">
                         <label for="founded_year" style="display:block; margin-bottom: 6px; font-weight: 600;">Founded Year</label>
-                        <input type="number" id="founded_year" name="founded_year" class="form-control" value="<?php echo htmlspecialchars($founded_year); ?>" min="1900" max="<?php echo date('Y'); ?>">
+                        <input type="number" id="founded_year" name="founded_year" class="form-control" value="<?php echo sanitizeInput($founded_year); ?>" min="1900" max="<?php echo date('Y'); ?>">
                     </div>
 
                     <div class="form-group">

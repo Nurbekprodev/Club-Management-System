@@ -35,103 +35,139 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $bio        = sanitizeInput($_POST['bio']);
 
     // Handle profile picture upload
-    $profile_picture = $profile['profile_picture']; // keep current
-    if (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['error'] === 0) {
-        $ext = pathinfo($_FILES['profile_picture']['name'], PATHINFO_EXTENSION);
-        $profile_picture = 'profile_' . $user_id . '_' . time() . '.' . $ext;
-        move_uploaded_file($_FILES['profile_picture']['tmp_name'], '../uploads/profile_pictures/' . $profile_picture);
-    }
+$uploadDir = "../uploads/profile_pictures/";
+$profile_picture = $profile['profile_picture']; // keep old image
 
-    if (empty($full_name)) {
-        setError("Full name is required.");
+if (!empty($_FILES['profile_picture']['name'])) {
+    $newImage = uploadAndResizeImage($_FILES['profile_picture'], $uploadDir);
+
+    if ($newImage === false) {
+        setError("Invalid file. Only JPG, PNG, WEBP images up to 5MB are allowed.");
+        header("Location: edit_profile.php");
+        exit();
     } else {
-        $stmt = $connection->prepare("
-            UPDATE member_profiles 
-            SET full_name=?, department=?, year_of_study=?, phone=?, dob=?, address=?, linkedin=?, instagram=?, skills=?, bio=?, profile_picture=? 
-            WHERE user_id=?
-        ");
-        $stmt->bind_param(
-            "sssssssssssi",
-            $full_name, $department, $year, $phone, $dob, $address, $linkedin, $instagram, $skills, $bio, $profile_picture, $user_id
-        );
-
-        if ($stmt->execute()) {
-            redirectWithMessage("member_profile.php", "Profile updated successfully!");
-        } else {
-            setError("Failed to update profile.");
-        }
+        $profile_picture = $newImage;
     }
+}
+
+// Validate full name
+if (empty($full_name)) {
+    setError("Full name is required.");
+    header("Location: edit_profile.php");
+    exit();
+}
+
+// If no errors, update the profile
+$stmt = $connection->prepare("
+    UPDATE member_profiles 
+    SET full_name=?, department=?, year_of_study=?, phone=?, dob=?, address=?, linkedin=?, instagram=?, skills=?, bio=?, profile_picture=? 
+    WHERE user_id=?
+");
+$stmt->bind_param(
+    "sssssssssssi",
+    $full_name, $department, $year, $phone, $dob, $address, $linkedin, $instagram, $skills, $bio, $profile_picture, $user_id
+);
+
+if ($stmt->execute()) {
+    redirectWithMessage("member_profile.php", "Profile updated successfully!");
+} else {
+    setError("Failed to update profile.");
+    header("Location: edit_profile.php");
+    exit();
+}
+
 }
 ?>
 
-<main class="profile-container">
-    <div class="profile-card">
+<main>
+<div class="container mt-4">
+    <div style="max-width: 500px; margin: 0 auto;">
 
-        <h3>Edit Profile</h3>
+        <a href="member_profile.php" class="btn btn-ghost mb-3">← Back</a>
 
-        <?php displayMessages(); ?>
+        <div class="card">
+            <div class="card-header">Edit Profile</div>
+            <div class="card-body">
 
-        <form method="POST" enctype="multipart/form-data">
+                <?php displayMessages(); ?>
 
-            <div class="form-group mb-3">
-                <label>Full Name *</label>
-                <input type="text" name="full_name" value="<?= htmlspecialchars($profile['full_name']) ?>" class="form-control" required>
+                <form method="POST" enctype="multipart/form-data">
+
+                    <div class="form-group">
+                        <label for="full_name" style="display:block; margin-bottom: 6px; font-weight: 600;">Full Name *</label>
+                        <input type="text" id="full_name" name="full_name" class="form-control"
+                               value="<?= htmlspecialchars($profile['full_name']) ?>" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="department" style="display:block; margin-bottom: 6px; font-weight: 600;">Department</label>
+                        <input type="text" id="department" name="department" class="form-control"
+                               value="<?= htmlspecialchars($profile['department']) ?>">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="year_of_study" style="display:block; margin-bottom: 6px; font-weight: 600;">Year of Study</label>
+                        <input type="text" id="year_of_study" name="year_of_study" class="form-control"
+                               value="<?= htmlspecialchars($profile['year_of_study']) ?>">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone" style="display:block; margin-bottom: 6px; font-weight: 600;">Phone</label>
+                        <input type="text" id="phone" name="phone" class="form-control"
+                               value="<?= htmlspecialchars($profile['phone']) ?>">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dob" style="display:block; margin-bottom: 6px; font-weight: 600;">Date of Birth</label>
+                        <input type="date" id="dob" name="dob" class="form-control"
+                               value="<?= htmlspecialchars($profile['dob']) ?>">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="address" style="display:block; margin-bottom: 6px; font-weight: 600;">Address</label>
+                        <input type="text" id="address" name="address" class="form-control"
+                               value="<?= htmlspecialchars($profile['address']) ?>">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="linkedin" style="display:block; margin-bottom: 6px; font-weight: 600;">LinkedIn</label>
+                        <input type="url" id="linkedin" name="linkedin" class="form-control"
+                               value="<?= htmlspecialchars($profile['linkedin']) ?>">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="instagram" style="display:block; margin-bottom: 6px; font-weight: 600;">Instagram</label>
+                        <input type="url" id="instagram" name="instagram" class="form-control"
+                               value="<?= htmlspecialchars($profile['instagram']) ?>">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="skills" style="display:block; margin-bottom: 6px; font-weight: 600;">Skills</label>
+                        <input type="text" id="skills" name="skills" class="form-control"
+                               value="<?= htmlspecialchars($profile['skills']) ?>" placeholder="Comma separated">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="bio" style="display:block; margin-bottom: 6px; font-weight: 600;">Bio</label>
+                        <textarea id="bio" name="bio" class="form-control" rows="4"><?= htmlspecialchars($profile['bio']) ?></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="profile_picture" style="display:block; margin-bottom: 6px; font-weight: 600;">Profile Picture</label>
+                        <input type="file" id="profile_picture" name="profile_picture" class="form-control">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 12px;">Save Changes</button>
+
+                </form>
+
             </div>
+        </div>
 
-            <div class="form-group mb-3">
-                <label>Department</label>
-                <input type="text" name="department" value="<?= htmlspecialchars($profile['department']) ?>" class="form-control">
-            </div>
-
-            <div class="form-group mb-3">
-                <label>Year of Study</label>
-                <input type="text" name="year_of_study" value="<?= htmlspecialchars($profile['year_of_study']) ?>" class="form-control">
-            </div>
-
-            <div class="form-group mb-3">
-                <label>Phone</label>
-                <input type="text" name="phone" value="<?= htmlspecialchars($profile['phone']) ?>" class="form-control">
-            </div>
-
-            <div class="form-group mb-3">
-                <label>Date of Birth</label>
-                <input type="date" name="dob" value="<?= htmlspecialchars($profile['dob']) ?>" class="form-control">
-            </div>
-
-            <div class="form-group mb-3">
-                <label>Address</label>
-                <input type="text" name="address" value="<?= htmlspecialchars($profile['address']) ?>" class="form-control">
-            </div>
-
-            <div class="form-group mb-3">
-                <label>LinkedIn</label>
-                <input type="url" name="linkedin" value="<?= htmlspecialchars($profile['linkedin']) ?>" class="form-control">
-            </div>
-
-            <div class="form-group mb-3">
-                <label>Instagram</label>
-                <input type="url" name="instagram" value="<?= htmlspecialchars($profile['instagram']) ?>" class="form-control">
-            </div>
-
-            <div class="form-group mb-3">
-                <label>Skills</label>
-                <input type="text" name="skills" value="<?= htmlspecialchars($profile['skills']) ?>" class="form-control" placeholder="Comma separated">
-            </div>
-
-            <div class="form-group mb-3">
-                <label>Bio</label>
-                <textarea name="bio" rows="4" class="form-control"><?= htmlspecialchars($profile['bio']) ?></textarea>
-            </div>
-
-            <div class="form-group mb-3">
-                <label>Profile Picture</label>
-                <input type="file" name="profile_picture" class="form-control">
-            </div>
-
-           <div class="profile-actions">
-    <button type="submit" class="btn btn-primary btn-block">Save Changes</button>
-    <a href="member_profile.php" class="btn btn-outline btn-block">Back</a>
+    </div>
 </div>
+</main>
+
 
 
         </form>

@@ -20,50 +20,121 @@ if (!$profile) {
     exit();
 }
 
-// Default image if missing
-$profile_picture = !empty($profile['profile_picture'])
+$profile_picture_path = !empty($profile['profile_picture'])
     ? '../uploads/profile_pictures/' . $profile['profile_picture']
-    : '../assets/default_user.png';
+    : '../uploads/profile_pictures/default_user.jpg';
+
+
+// Handle profile picture display
+$uploadDir = "../uploads/profile_pictures/";
+$profile_picture = $profile['profile_picture']; // current image
+
+// If user uploaded a new picture
+if (!empty($_FILES['profile_picture']['name'])) {
+
+    $newImage = uploadAndResizeImage($_FILES['profile_picture'], $uploadDir);
+
+    if ($newImage) {
+        $profile_picture = $newImage; // use new image
+    }
+}
+
 ?>
 
-<main class="profile-container">
-    <div class="profile-card">
+<main>
+<div class="container mt-4">
+    <div style="max-width: 600px; margin: 0 auto;">
 
-        <h3>My Profile</h3>
+        <a href="dashboard.php" class="btn btn-ghost mb-3">← Back</a>
 
-        <div class="profile-image-wrapper">
-            <img src="<?= htmlspecialchars($profile_picture) ?>" alt="Profile Picture" class="profile-image">
-        </div>
+        <div class="card">
+            <div class="card-header">My Profile</div>
+            
+            <!-- <?php displayMessages() ?> -->
+            <div class="card-body">
 
-        <h4><?= htmlspecialchars($profile['full_name']) ?></h4>
+                <!-- Profile Picture -->
+                <img src="<?= htmlspecialchars($profile_picture_path) ?>" 
+                    alt="Profile Picture" 
+                    class="profile-image">
 
-        <div class="profile-info">
-            <p><strong>Department:</strong> <?= htmlspecialchars($profile['department']) ?></p>
-            <p><strong>Year of Study:</strong> <?= htmlspecialchars($profile['year_of_study']) ?></p>
-            <p><strong>Phone:</strong> <?= htmlspecialchars($profile['phone']) ?></p>
-            <p><strong>Date of Birth:</strong> <?= htmlspecialchars($profile['dob']) ?></p>
-            <p><strong>Address:</strong> <?= htmlspecialchars($profile['address']) ?></p>
-<?php if (!empty($profile['linkedin'])): ?>
-    <p><strong>LinkedIn:</strong> <a href="<?= htmlspecialchars($profile['linkedin']) ?>" target="_blank"><?= htmlspecialchars($profile['linkedin']) ?></a></p>
-<?php endif; ?>
+                    
 
-<?php if (!empty($profile['instagram'])): ?>
-    <p><strong>Instagram:</strong> <a href="<?= htmlspecialchars($profile['instagram']) ?>" target="_blank"><?= htmlspecialchars($profile['instagram']) ?></a></p>
-<?php endif; ?>
+                <!-- Full Name -->
+                <div class="mb-3">
+                    <strong>Full Name:</strong>
+                    <p class="text-muted"><?= htmlspecialchars($profile['full_name']) ?></p>
+                </div>
 
-<?php if (!empty($profile['skills'])): ?>
-    <p><strong>Skills:</strong> <?= htmlspecialchars($profile['skills']) ?></p>
-<?php endif; ?>
+                <div class="mb-3">
+                    <strong>Department:</strong>
+                    <p class="text-muted"><?= htmlspecialchars($profile['department']) ?></p>
+                </div>
 
-            <p><strong>Bio:</strong><br><?= nl2br(htmlspecialchars($profile['bio'])) ?></p>
-        </div>
+                <div class="mb-3">
+                    <strong>Year of Study:</strong>
+                    <p class="text-muted"><?= htmlspecialchars($profile['year_of_study']) ?></p>
+                </div>
 
-        <div class="profile-actions">
-            <a href="edit_profile.php" class="btn btn-primary">Edit Profile</a>
-            <a href="dashboard.php" class="btn btn-primary btn-block">Back</a>
+                <div class="mb-3">
+                    <strong>Phone:</strong>
+                    <p class="text-muted"><?= htmlspecialchars($profile['phone']) ?></p>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Date of Birth:</strong>
+                    <p class="text-muted"><?= htmlspecialchars($profile['dob']) ?></p>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Address:</strong>
+                    <p class="text-muted"><?= htmlspecialchars($profile['address']) ?></p>
+                </div>
+
+                <?php if (!empty($profile['linkedin'])): ?>
+                <div class="mb-3">
+                    <strong>LinkedIn:</strong>
+                    <p class="text-muted">
+                        <a href="<?= htmlspecialchars($profile['linkedin']) ?>" target="_blank">
+                            <?= htmlspecialchars($profile['linkedin']) ?>
+                        </a>
+                    </p>
+                </div>
+                <?php endif; ?>
+
+                <?php if (!empty($profile['instagram'])): ?>
+                <div class="mb-3">
+                    <strong>Instagram:</strong>
+                    <p class="text-muted">
+                        <a href="<?= htmlspecialchars($profile['instagram']) ?>" target="_blank">
+                            <?= htmlspecialchars($profile['instagram']) ?>
+                        </a>
+                    </p>
+                </div>
+                <?php endif; ?>
+
+                <?php if (!empty($profile['skills'])): ?>
+                <div class="mb-3">
+                    <strong>Skills:</strong>
+                    <p class="text-muted"><?= htmlspecialchars($profile['skills']) ?></p>
+                </div>
+                <?php endif; ?>
+
+                <div class="mb-3">
+                    <strong>Bio:</strong>
+                    <p class="text-muted"><?= nl2br(htmlspecialchars($profile['bio'])) ?></p>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="profile-actions" style="margin-top: 20px;">
+                    <a href="edit_profile.php" class="table-action-btn edit" >Edit Profile</a>
+                </div>
+
+            </div>
         </div>
 
     </div>
+</div>
 </main>
 
 <?php include '../includes/footer.php'; ?>

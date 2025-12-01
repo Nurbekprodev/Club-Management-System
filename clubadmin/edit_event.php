@@ -50,14 +50,35 @@ if (isset($_POST['update_event'])) {
     $event_image = $event['event_image']; // keep old image by default
 
     // If new image uploaded
-    if (!empty($_FILES['event_image']['name'])) {
-        $target_dir = "../includes/images/";
-        if (!is_dir($target_dir)) mkdir($target_dir, 0777, true);
-        $target_file = $target_dir . basename($_FILES['event_image']['name']);
-        if (move_uploaded_file($_FILES['event_image']['tmp_name'], $target_file)) {
-            $event_image = $target_file;
-        }
+   $event_image = null;
+
+if (!empty($_FILES['event_image']['name'])) {
+    // Validate image
+    $upload_error = validateImageUpload($_FILES['event_image']);
+    if (!empty($upload_error)) {
+        setError($upload_error);
+        header("Location: create_event.php");
+        exit();
     }
+
+    // Generate unique filename
+    $file_extension = pathinfo($_FILES['event_image']['name'], PATHINFO_EXTENSION);
+    $safe_filename = bin2hex(random_bytes(8)) . '.' . $file_extension;
+    
+    $target_dir = "../uploads/event_images/";
+    if (!is_dir($target_dir)) mkdir($target_dir, 0755, true);
+    
+    $target_file = $target_dir . $safe_filename;
+
+    if (move_uploaded_file($_FILES['event_image']['tmp_name'], $target_file)) {
+        $event_image = $target_file;
+    }
+}
+
+// Default fallback image if none uploaded
+$event_image_path = !empty($event_image) && file_exists($event_image)
+    ? $event_image
+    : "../uploads/event_images/default_event.jpeg";
 
     // Update query
     $sql = "UPDATE events 

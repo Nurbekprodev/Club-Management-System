@@ -56,39 +56,43 @@ if (isset($_POST['update_club'])) {
     // Handle Logo Upload
     $logo_path = $club['logo'];
 
-    if (!empty($_FILES['logo']['name'])) {
-        $allowed_types = ['image/jpeg', 'image/png', 'image/gif'];
-        $max_size = 5 * 1024 * 1024; // 5MB
-
-        if (!in_array($_FILES['logo']['type'], $allowed_types)) {
-            setError("Only JPEG, PNG, and GIF files are allowed.");
-            header("Location: edit_club.php?id=$club_id");
-            exit();
-        }
-
-        if ($_FILES['logo']['size'] > $max_size) {
-            setError("File size must not exceed 5MB.");
-            header("Location: edit_club.php?id=$club_id");
-            exit();
-        }
-
-        $target_dir = "../includes/images/";
-        if (!is_dir($target_dir)) mkdir($target_dir, 0755, true);
-
-        $filename = time() . "_" . preg_replace('/[^a-zA-Z0-9._-]/', '', basename($_FILES["logo"]["name"]));
-        $target_path = $target_dir . $filename;
-
-        if (move_uploaded_file($_FILES["logo"]["tmp_name"], $target_path)) {
-            if (!empty($club['logo']) && file_exists($club['logo'])) {
-                unlink($club['logo']);
-            }
-            $logo_path = $target_path;
-        } else {
-            setError("Error uploading logo file.");
-            header("Location: edit_club.php?id=$club_id");
-            exit();
-        }
+// Handle new logo upload
+if (!empty($_FILES['logo']['name'])) {
+    // Validate the image (type, size)
+    $upload_error = validateImageUpload($_FILES['logo']);
+    if (!empty($upload_error)) {
+        setError($upload_error);
+        header("Location: edit_club.php?id=$club_id");
+        exit();
     }
+
+    // Generate a safe unique filename
+    $file_extension = pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION);
+    $safe_filename = bin2hex(random_bytes(8)) . '.' . $file_extension;
+
+    $upload_dir = "../uploads/club_images/";
+    if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
+
+    $target_path = $upload_dir . $safe_filename;
+
+    if (move_uploaded_file($_FILES['logo']['tmp_name'], $target_path)) {
+        // Delete old logo if exists
+        if (!empty($club['logo']) && file_exists($club['logo'])) {
+            unlink($club['logo']);
+        }
+        $logo_path = $target_path;
+    } else {
+        setError("Error uploading logo file.");
+        header("Location: edit_club.php?id=$club_id");
+        exit();
+    }
+}
+
+// Fallback to default logo if none
+$logo_path = !empty($logo_path) && file_exists($logo_path)
+    ? $logo_path
+    : "../uploads/club_images/default_img.jpg";
+
 
     $update = $connection->prepare("
         UPDATE clubs 
