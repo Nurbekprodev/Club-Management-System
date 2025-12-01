@@ -17,7 +17,7 @@ $filter_club = !empty($_GET['club_id']) ? intval($_GET['club_id']) : null;
 $section     = $_GET['section'] ?? 'upcoming';
 $page        = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
 
-$limit       = 4;
+$limit       = 6;
 $offset      = ($page - 1) * $limit;
 
 $where  = " WHERE 1=1 ";

@@ -891,3 +891,129 @@ td {
 }
 
 
+.profile-container {
+ 
+    max-width: 900px;           /* consistent with other pages */
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+.profile-card {
+    background: var(--surface-1);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    padding: 30px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.profile-avatar img {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid var(--color-primary);
+}
+
+.profile-title h3 {
+    font-size: var(--fs-xl);
+    margin: 0 0 5px 0;
+    color: var(--text);
+}
+
+.profile-title .profile-role {
+    font-size: var(--fs-md);
+    color: var(--text-muted);
+}
+
+.profile-info {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px 30px;
+}
+
+.profile-info p {
+    margin: 0;
+    font-size: var(--fs-md);
+    color: var(--text);
+}
+
+.profile-info p strong {
+    color: var(--text-muted);
+}
+
+.profile-info p.full-bio {
+    grid-column: 1 / -1;
+}
+
+.profile-info a {
+    color: var(--color-primary);
+    text-decoration: none;
+    word-break: break-word;
+}
+
+.profile-info a:hover {
+    text-decoration: underline;
+}
+
+.profile-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.profile-actions .btn {
+    min-width: 150px;
+    padding: 10px 20px;
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-md);
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.3s, color 0.3s;
+}
+
+.profile-actions .btn-primary {
+    background: var(--color-primary);
+    color: #fff;
+    border: none;
+}
+
+.profile-actions .btn-primary:hover {
+    background: var(--color-primary-hover);
+}
+
+.profile-actions .btn-danger {
+    background: var(--color-danger);
+    color: #fff;
+    border: none;
+}
+
+.profile-actions .btn-danger:hover {
+    background: var(--color-danger-hover);
+}
+
+.profile-actions .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--color-muted);
+    color: var(--text);
+}
+
+.profile-actions .btn-ghost:hover {
+    background: var(--surface-hover);
+}
+
+.btn-block {
+    display: block;
+    width: 100%;
+    text-align: center;
+    padding: 10px 20px;
+}

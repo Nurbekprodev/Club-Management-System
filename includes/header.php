@@ -42,7 +42,9 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     <li><a href="../member/dashboard.php" class="nav-link <?php echo $current_page === 'dashboard.php' ? 'active' : ''; ?>">Dashboard</a></li>
                     <li><a href="../member/view_clubs.php" class="nav-link <?php echo $current_page === 'clubs.php' ? 'active' : ''; ?>">Browse Clubs</a></li>
                     <li><a href="../member/view_events.php" class="nav-link <?php echo $current_page === 'view_events.php' ? 'active' : ''; ?>">Browse Events</a></li>
-                    <li><a href="profile.php" class="nav-link <?php echo $current_page === 'request_role.php' ? 'active' : ''; ?>">Profile</a></li>
+                    <li><a href="../member/request_role.php" class="nav-link <?php echo $current_page === 'request_role.php' ? 'active' : ''; ?>">Request Role</a></li>
+                    <li><a href="../member/member_profile.php" class="nav-link <?php echo $current_page === 'member_profile.php' ? 'active' : ''; ?>">My Profile</a></li>
+
 
                 <?php elseif ($user_role === 'clubadmin'): ?>
                     <!-- Club Admin Navigation -->
