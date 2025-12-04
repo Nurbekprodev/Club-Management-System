@@ -421,7 +421,7 @@ function uploadAndResizeImage($file, $uploadDir, $maxSizeMB = 5)
 
     // Validate MIME type
     if (!array_key_exists($mimeType, $allowedTypes)) {
-        return false; // ❌ Not an allowed image type
+        return false; //  Not an allowed image type
     }
 
     // Unique file name

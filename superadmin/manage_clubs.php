@@ -57,12 +57,18 @@ $result = $query->get_result();
               <td><?= htmlspecialchars(substr($row['description'], 0, 60)) ?>...</td>
               <td><?= htmlspecialchars($row['admin_name']) ?></td>
               <td>
-                <form method="POST" style="display:inline;">
-                    <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
-                    <input type="hidden" name="delete_club_id" value="<?= $row['id'] ?>">
-                    <button type="submit" onclick="return confirm('Delete this club?')" class="btn btn-outline" style="padding: 4px 8px; font-size: 12px; color: #dc3545;">Delete</button>
-                </form>
+                  <!-- View club details (Superadmin version) -->
+                  <a href="club_details.php?id=<?= $row['id'] ?>" class="btn btn-outline" style="padding: 4px 8px; font-size: 12px; margin-left:4px;">
+                      View Details
+                  </a>
+                  <form method="POST" style="display:inline;">
+                      <input type="hidden" name="csrf_token" value="<?= generateCSRFToken(); ?>">
+                      <input type="hidden" name="delete_club_id" value="<?= $row['id'] ?>">
+                      <button type="submit" onclick="return confirm('Delete this club?')" class="btn btn-outline" style="padding: 4px 8px; font-size: 12px; color: #dc3545;">Delete</button>
+                  </form>
               </td>
+                          
+             
             </tr>
           <?php endwhile; ?>
         </tbody>
