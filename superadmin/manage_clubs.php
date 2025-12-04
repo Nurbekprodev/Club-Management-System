@@ -58,13 +58,13 @@ $result = $query->get_result();
               <td><?= htmlspecialchars($row['admin_name']) ?></td>
               <td>
                   <!-- View club details (Superadmin version) -->
-                  <a href="club_details.php?id=<?= $row['id'] ?>" class="btn btn-outline" style="padding: 4px 8px; font-size: 12px; margin-left:4px;">
+                  <a href="club_details.php?id=<?= $row['id'] ?>" class="table-action-btn view" style="padding: 4px 8px; font-size: 12px; margin-left:4px;">
                       View Details
                   </a>
                   <form method="POST" style="display:inline;">
                       <input type="hidden" name="csrf_token" value="<?= generateCSRFToken(); ?>">
                       <input type="hidden" name="delete_club_id" value="<?= $row['id'] ?>">
-                      <button type="submit" onclick="return confirm('Delete this club?')" class="btn btn-outline" style="padding: 4px 8px; font-size: 12px; color: #dc3545;">Delete</button>
+                      <button type="submit" onclick="return confirm('Delete this club?')" class="table-action-btn delete" style="padding: 4px 8px; font-size: 12px; ">Delete</button>
                   </form>
               </td>
                           

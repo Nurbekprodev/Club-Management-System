@@ -34,7 +34,13 @@ if ($result->num_rows === 0) {
 }
 
 $event = $result->fetch_assoc();
+
+// Handle event image before main
+$event_image_path = (!empty($event['event_image']) && file_exists($event['event_image']))
+    ? $event['event_image']
+    : '../uploads/event_images/default_event.jpeg';
 ?>
+
 
 <main>
 <div class="container mt-4">
@@ -44,9 +50,9 @@ $event = $result->fetch_assoc();
         <div class="card">
             <div class="card-header">Event Details</div>
             <div class="card-body">
-                <?php if (!empty($event['event_image'])): ?>
-                    <img src="<?= htmlspecialchars($event['event_image']) ?>" alt="Event image" style="width: 100%; max-width: 400px; border-radius: 8px; margin-bottom: 15px;">
-                <?php endif; ?>
+                <img src="<?= htmlspecialchars($event_image_path) ?>" alt="Event image" 
+                style="width: 100%; max-width: 400px; border-radius: 8px; margin-bottom: 15px; object-fit: cover;">
+
 
                 <div class="mb-3">
                     <strong>Title:</strong>

@@ -56,13 +56,13 @@ $result = $stmt->get_result();
                     <td><?= htmlspecialchars($row['role']) ?></td>
                     <td>
                         <!-- View Profile -->
-                        <a href="user_profile.php?id=<?= $row['id'] ?>" class="btn btn-outline" style="margin-right: 6px;">View Profile</a>
+                        <a href="user_profile.php?id=<?= $row['id'] ?>" class="table-action-btn view" style="margin-right: 6px; color: white;">View Profile</a>
 
                         <!-- Delete User Form -->
                         <form method="POST" style="display:inline;">
                             <input type="hidden" name="csrf_token" value="<?= generateCSRFToken(); ?>">
                             <input type="hidden" name="delete_user_id" value="<?= $row['id'] ?>">
-                            <button type="submit" onclick="return confirm('Delete this user?')" class="btn btn-outline" style="color: var(--danger);">Delete</button>
+                            <button type="submit" onclick="return confirm('Delete this user?')" class="table-action-btn delete">Delete</button>
                         </form>
                     </td>
                 </tr>

@@ -27,7 +27,8 @@
   /* Softer Surfaces */
   --surface-1: #ffffff;
   --surface-2: #f2f4f7; /* slightly darker than your old #f8f9fa */
-  --border-color: #dcdfe3; /* clearer borders */
+  --border-color: #dcdde3; /* clearer borders */
+  --light-btn-bg: #f9fafb;
 
   /* Semantic Colors */
   --success: #22c55e;
@@ -74,6 +75,7 @@
     --text-muted: #9aa6b2;
     --border-color: rgba(255, 255, 255, 0.06);
     --shadow-sm: none;
+--light-btn-bg: #f9fafb;
   }
 }
 
@@ -148,7 +150,7 @@ body {
 
 main {
   flex: 1; /* fills remaining space before footer */
-  padding: var(--space-6) var(--space-4); /* top & bottom breathing room */
+  padding: var(--space-6) 0; /* top & bottom breathing room */
 }
 
 /* ========== Header/Footer ========== */
@@ -389,18 +391,18 @@ main {
 
 /* Base styles for variants */
 .table-action-btn.view {
-  color: var(--text);
+  color: #fff;
   border-color: var(--color-primary);
 }
 
 .table-action-btn.edit {
-  color: var(--text);
+  color:#fff;
   border-color: var(--border-color);
 }
 
 .table-action-btn.delete {
   background: var(--danger);
-  color: var(--text);
+  color: #fff;
   /* border-color: var(--danger); */
 }
 
@@ -524,9 +526,14 @@ main {
   border: 1px solid transparent;
 }
 .btn-outline {
-  background: transparent;
-  color: var(--text);
+  background: var(--light-btn-bg);
+  color: black;
   border: 1px solid var(--border-color);
+}
+
+.btn-outline:hover {
+  background: var(--color-primary);
+  color: #fff;
 }
 
 /* ========== Forms ========== */
@@ -708,7 +715,7 @@ main {
 }
 
 /* Responsive */
-@media (max-width: 768px) {
+@media (max-width: 868px) {
   .main-nav {
     display: none;
     position: absolute;
@@ -949,4 +956,247 @@ td {
         flex-direction: column;
         gap: 12px;
     }
+}
+
+
+
+
+
+
+/* ============================
+   HOMEPAGE LAYOUT (SAFE NEW CSS)
+   ============================ */
+
+/* Hero Section */
+.home-hero {
+  padding: 60px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.home-hero .hero-text {
+  flex: 1;
+  min-width: 300px;
+  padding-right: 20px;
+}
+
+.home-hero h1 {
+  font-size: 2.4rem;
+  margin-bottom: 15px;
+}
+
+.home-hero p {
+  font-size: 1rem;
+  opacity: 0.8;
+  max-width: 500px;
+}
+
+.hero-actions {
+  margin-top: 20px;
+}
+
+.hero-actions .btn {
+  margin-right: 10px;
+}
+
+.home-hero .hero-card {
+  width: 350px;
+  max-width: 100%;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+/* Section Header */
+.section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+/* Grid Cards */
+.home-grid {
+  display: grid;
+  gap: 20px;
+}
+
+@media (min-width: 600px) {
+  .home-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 900px) {
+  .home-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Card Images */
+.card-img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+}
+
+/* About Section */
+.about-grid {
+  display: grid;
+  gap: 20px;
+}
+
+@media (min-width: 800px) {
+  .about-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* CTA Section */
+.cta-box {
+  padding: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.cta-box p {
+  max-width: 500px;
+}
+
+/* Prevent conflicts */
+.homepage-only * {
+  box-sizing: border-box;
+}
+/* ===========================
+   ABOUT PAGE PROFESSIONAL STYLE
+   =========================== */
+
+.about-page .hero-section {
+  padding: 80px 0 50px;
+  text-align: center;
+}
+
+.hero-title {
+  font-size: 2.6rem;
+  font-weight: 700;
+  margin-bottom: 15px;
+}
+
+.hero-subtitle {
+  font-size: 1.1rem;
+  max-width: 700px;
+  margin: 0 auto;
+  opacity: 0.8;
+}
+
+/* Section Titles */
+.section-heading {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 35px;
+}
+
+/* Features Grid */
+.features-grid {
+  display: grid;
+  gap: 25px;
+}
+
+.features-grid .feature-box {
+  padding: 25px;
+  border-radius: var(--radius-md);
+  background: var(--light-color);
+}
+
+@media (min-width: 800px) {
+  .features-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Vision Text */
+.vision-text {
+  max-width: 850px;
+  margin: auto;
+  font-size: 1.05rem;
+  line-height: 1.7;
+  opacity: 0.9;
+  text-align: center;
+}
+
+/* Impact Stats */
+.impact-grid {
+  display: grid;
+  gap: 25px;
+  margin-top: 25px;
+}
+
+.impact-item {
+  text-align: center;
+  padding: 25px 15px;
+}
+
+.impact-item h3 {
+  font-size: 2rem;
+  margin-bottom: 8px;
+}
+
+.impact-item p {
+  opacity: 0.7;
+}
+
+@media (min-width: 700px) {
+  .impact-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+  /* ABOUT PAGE — Minimal Additions */
+
+/* Different background for About page hero */
+.about-hero-bg {
+    background: linear-gradient(to bottom right, #1f2d3a, #32485e);
+    color: #fff;
+}
+
+/* Light background reused for sections */
+.light-bg {
+    background: var(--surface-2);
+}
+
+/* Better text width */
+.about-text, .vision-text {
+    max-width: 900px;
+    margin: 0 auto 1.5rem;
+    line-height: 1.7;
+}
+
+/* Features grid (auto fits nicely) */
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+}
+
+.feature-box {
+    background: #fff;
+    padding: 20px;
+    border-radius: var(--radius-md);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+/* Impact numbers */
+.impact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.5rem;
+    text-align: center;
+}
+
+.impact-item h3 {
+    font-size: 2rem;
+    margin-bottom: 0.25rem;
 }

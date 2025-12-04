@@ -156,6 +156,11 @@ $events = $ev->get_result();
 $club_logo_path = !empty($club['logo']) && file_exists("../uploads/club_images/" . $club['logo'])
     ? "../uploads/club_images/" . $club['logo']
     : "../uploads/club_images/default_club.jpg";
+
+$event_logo_path = !empty($event['event_image']) && file_exists("../uploads/event_images/" . $event['event_image'])
+    ? "../uploads/event_images/" . $event['event_image']
+    : "../uploads/event_images/default_event.jpeg";
+
 ?>
 
 <main>
@@ -233,7 +238,7 @@ $club_logo_path = !empty($club['logo']) && file_exists("../uploads/club_images/"
                 <div class="card">
 
                     <!-- Event Image -->
-                   <img src="<?= !empty($e['event_image']) ? $e['event_image'] : '..\includes\images\default_img.jpeg' ?>"
+                   <img src="<?= $event_logo_path ?>"
                          class="card-img-top"
                          alt="Event Image"
                           style="height:180px; object-fit:cover; border-radius:4px;">
