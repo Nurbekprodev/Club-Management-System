@@ -218,18 +218,18 @@ $getParams = $_GET;
 
 <?php if ($page > 1): 
     $getParams['page'] = $page - 1; ?>
-    <a href="?<?= http_build_query($getParams) ?>" class="btn btn-outline">← Previous</a>
+    <a href="?<?= http_build_query($getParams) ?>" class="btn table-action-btn view">← Previous</a>
 <?php endif; ?>
 
 <?php if ($start > 1): 
     $getParams['page'] = 1; ?>
-    <a href="?<?= http_build_query($getParams) ?>" class="btn btn-outline">1</a>
+    <a href="?<?= http_build_query($getParams) ?>" class="btn table-action-btn view">1</a>
     <?php if ($start > 2): ?><span class="px-2">...</span><?php endif; ?>
 <?php endif; ?>
 
 <?php for ($i = $start; $i <= $end; $i++): 
     $getParams['page'] = $i; ?>
-    <a href="?<?= http_build_query($getParams) ?>" class="btn <?= ($i == $page) ? 'btn-primary' : 'btn-outline' ?>">
+    <a href="?<?= http_build_query($getParams) ?>" class="btn <?= ($i == $page) ? 'btn-primary' : 'table-action-btn view' ?>">
         <?= $i ?>
     </a>
 <?php endfor; ?>
@@ -237,12 +237,12 @@ $getParams = $_GET;
 <?php if ($end < $totalPages): 
     $getParams['page'] = $totalPages; ?>
     <?php if ($end < $totalPages - 1): ?><span class="px-2">...</span><?php endif; ?>
-    <a href="?<?= http_build_query($getParams) ?>" class="btn btn-outline"><?= $totalPages ?></a>
+    <a href="?<?= http_build_query($getParams) ?>" class="btn table-action-btn view"><?= $totalPages ?></a>
 <?php endif; ?>
 
 <?php if ($page < $totalPages): 
     $getParams['page'] = $page + 1; ?>
-    <a href="?<?= http_build_query($getParams) ?>" class="btn btn-outline">Next →</a>
+    <a href="?<?= http_build_query($getParams) ?>" class="btn  table-action-btn view">Next →</a>
 <?php endif; ?>
 
 </div>

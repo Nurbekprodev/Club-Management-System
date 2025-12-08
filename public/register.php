@@ -4,10 +4,9 @@ include '../includes/database.php';
 include '../includes/functions.php';
 include '../includes/header.php';
 
-$name = $email = $password = "";
+$name = $email = $password = $confirm_password = "";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Verify CSRF token
     if (!isset($_POST['csrf_token']) || !verifyCSRFToken($_POST['csrf_token'])) {
         die("CSRF token validation failed.");
     }
@@ -15,18 +14,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $name = trim($_POST['name']);
     $email = trim($_POST['email']);
     $password = trim($_POST['password']);
+    $confirm_password = trim($_POST['confirm_password']);
     $role = "member";
 
-    // validate fields
     $name_error = validateName($name);
     $email_error = validateEmail($email);
     $password_error = validatePassword($password);
 
-    // if no errors
-    if (empty($name_error) && empty($email_error) && empty($password_error)) {
+    $confirm_error = "";
+    if ($password !== $confirm_password) {
+        $confirm_error = "Passwords do not match.";
+    }
+
+    if (empty($name_error) && empty($email_error) && empty($password_error) && empty($confirm_error)) {
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-        // check email using prepared statement
         $check_stmt = $connection->prepare("SELECT * FROM users WHERE email = ?");
         $check_stmt->bind_param("s", $email);
         $check_stmt->execute();
@@ -35,12 +37,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($result->num_rows > 0) {
             setError("This email is already registered.");
         } else {
-            // insert user using prepared statement
             $insert_stmt = $connection->prepare("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)");
             $insert_stmt->bind_param("ssss", $name, $email, $hashed_password, $role);
             if ($insert_stmt->execute()) {
                 setSuccess("Registration successful! You can now log in.");
-                $name = $email = $password = "";
+                $name = $email = $password = $confirm_password = "";
             } else {
                 setError("Registration failed. Please try again.");
             }
@@ -49,6 +50,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (!empty($name_error)) setError($name_error);
         else if (!empty($email_error)) setError($email_error);
         else if (!empty($password_error)) setError($password_error);
+        else if (!empty($confirm_error)) setError($confirm_error);
     }
 }
 ?>
@@ -63,7 +65,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                     <form action="" method="POST">
                         <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
-                        
+
                         <div class="form-group">
                             <label for="name" style="display:block; margin-bottom: 6px; font-weight: 600;">Full Name</label>
                             <input type="text" id="name" name="name" class="form-control" value="<?php echo htmlspecialchars($name); ?>" required>
@@ -77,6 +79,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <div class="form-group">
                             <label for="password" style="display:block; margin-bottom: 6px; font-weight: 600;">Password</label>
                             <input type="password" id="password" name="password" class="form-control" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="confirm_password" style="display:block; margin-bottom: 6px; font-weight: 600;">Confirm Password</label>
+                            <input type="password" id="confirm_password" name="confirm_password" class="form-control" required>
                         </div>
 
                         <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 12px;">Register</button>
