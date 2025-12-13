@@ -20,6 +20,27 @@ if (!$profile) {
     exit();
 }
 
+// Handle Delete Profile Picture
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_image'])) {
+    if (!empty($profile['profile_picture'])) {
+        $imagePath = '../uploads/profile_pictures/' . $profile['profile_picture'];
+
+        // Delete file from server
+        if (file_exists($imagePath)) {
+            unlink($imagePath);
+        }
+
+        // Update DB
+        $stmt = $connection->prepare("UPDATE admin_profiles SET profile_picture = NULL WHERE user_id = ?");
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+
+        // Refresh page
+        header("Location: admin_profile.php");
+        exit();
+    }
+}
+
 // Handle profile picture path
 $profile_picture_path = !empty($profile['profile_picture'])
     ? '../uploads/profile_pictures/' . $profile['profile_picture']
@@ -41,6 +62,16 @@ $profile_picture_path = !empty($profile['profile_picture'])
                 <img src="<?= sanitizeInput($profile_picture_path) ?>" 
                      alt="Profile Picture" 
                      class="profile-image">
+
+                <!-- Delete Picture Button -->
+                <?php if (!empty($profile['profile_picture'])): ?>
+                    <form method="POST" style="margin:10px 0; ">
+                        <input type="hidden" name="delete_image" value="1">
+                        <button type="submit" class="table-action-btn edit" onclick="return confirm('Delete profile picture?')">
+                            Delete Picture
+                        </button>
+                    </form>
+                <?php endif; ?>
 
                 <!-- Full Name -->
                 <div class="profile-info">

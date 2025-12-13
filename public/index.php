@@ -91,7 +91,7 @@ $categories = $catRes ? $catRes->fetch_all(MYSQLI_ASSOC) : [];
             <div class="card-body">
               <h3 class="card-header"><?= htmlspecialchars($club['name']) ?></h3>
               <p class="text-muted small"><?= htmlspecialchars(substr($club['description'], 0, 110)) ?>...</p>
-              <a href="../member/club_details.php?id=<?= $club['id'] ?>" class="btn btn-outline mt-2">View</a>
+              <a href="../member/club_details.php?id=<?= $club['id'] ?>" class="btn btn-primary">View</a>
             </div>
           </div>
 
@@ -127,7 +127,7 @@ $categories = $catRes ? $catRes->fetch_all(MYSQLI_ASSOC) : [];
             <div class="card-body">
               <h3 class="card-header"><?= htmlspecialchars($e['title']) ?></h3>
               <p class="text-muted small"><?= htmlspecialchars(substr($e['description'], 0, 110)) ?>...</p>
-              <a href="../member/view_events.php?id=<?= $e['id'] ?>" class="btn btn-outline mt-2">Details</a>
+              <a href="../member/view_events.php?id=<?= $e['id'] ?>" class="btn btn-primary">Details</a>
             </div>
           </div>
 

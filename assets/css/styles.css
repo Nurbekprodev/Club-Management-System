@@ -387,6 +387,7 @@ main {
   text-decoration: none;
   transition: 0.2s;
   background-color: var(--color-primary);
+  margin-top: 1px;
 }
 
 /* Base styles for variants */
@@ -969,7 +970,7 @@ td {
 
 /* Hero Section */
 .home-hero {
-  padding: 60px 0;
+  padding: 60px 10px;
   display: flex;
   align-items: center;
   justify-content: space-between;

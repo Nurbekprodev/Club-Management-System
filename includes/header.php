@@ -12,6 +12,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo isset($page_title) ? htmlspecialchars($page_title) : 'ClubWeave'; ?></title>
     <link rel="stylesheet" href="<?php echo isset($css_path) ? $css_path : '../assets/css/styles.css'; ?>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body>
 
@@ -86,7 +87,9 @@ $current_page = basename($_SERVER['PHP_SELF']);
             <?php endif; ?>
         </div>
 
-        <button class="btn btn-ghost" id="theme-toggle" onclick="toggleTheme()">🌙</button>
+        <button class="btn btn-ghost" id="theme-toggle" onclick="toggleTheme()">
+            <i class="fa-solid fa-moon"></i>
+        </button>
         <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
 
     </div>

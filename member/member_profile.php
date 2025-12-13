@@ -20,25 +20,30 @@ if (!$profile) {
     exit();
 }
 
-$profile_picture_path = !empty($profile['profile_picture'])
-    ? '../uploads/profile_pictures/' . $profile['profile_picture']
-    : '../uploads/profile_pictures/default_user.jpg';
+// Handle Delete Profile Picture
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_image'])) {
+    if (!empty($profile['profile_picture'])) {
+        $imagePath = '../uploads/profile_pictures/' . $profile['profile_picture'];
 
+        // Delete file from server
+        if (file_exists($imagePath)) {
+            unlink($imagePath);
+        }
 
-// Handle profile picture display
-$uploadDir = "../uploads/profile_pictures/";
-$profile_picture = $profile['profile_picture']; // current image
+        // Update DB
+        $stmt = $connection->prepare("UPDATE member_profiles SET profile_picture = NULL WHERE user_id = ?");
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
 
-// If user uploaded a new picture
-if (!empty($_FILES['profile_picture']['name'])) {
-
-    $newImage = uploadAndResizeImage($_FILES['profile_picture'], $uploadDir);
-
-    if ($newImage) {
-        $profile_picture = $newImage; // use new image
+        // Refresh page
+        header("Location: member_profile.php");
+        exit();
     }
 }
 
+$profile_picture_path = !empty($profile['profile_picture'])
+    ? '../uploads/profile_pictures/' . $profile['profile_picture']
+    : '../uploads/profile_pictures/default_user.jpg';
 ?>
 
 <main>
@@ -49,8 +54,7 @@ if (!empty($_FILES['profile_picture']['name'])) {
 
         <div class="card">
             <div class="card-header">My Profile</div>
-            
-            <!-- <?php displayMessages() ?> -->
+
             <div class="card-body">
 
                 <!-- Profile Picture -->
@@ -58,7 +62,15 @@ if (!empty($_FILES['profile_picture']['name'])) {
                     alt="Profile Picture" 
                     class="profile-image">
 
-                    
+                <!-- Delete Picture Button -->
+                <?php if (!empty($profile['profile_picture'])): ?>
+                    <form method="POST" style="margin:10px 0;">
+                        <input type="hidden" name="delete_image" value="1">
+                        <button type="submit" class="table-action-btn edit" onclick="return confirm('Delete profile picture?')">
+                            Delete Picture
+                        </button>
+                    </form>
+                <?php endif; ?>
 
                 <!-- Full Name -->
                 <div class="profile-info">
@@ -94,11 +106,11 @@ if (!empty($_FILES['profile_picture']['name'])) {
                 <?php if (!empty($profile['linkedin'])): ?>
                 <div class="mb-3">
                     <strong>LinkedIn:</strong>
-                <p class="text-muted profile-link">
-                    <a href="<?= sanitizeInput($profile['linkedin']) ?>" target="_blank">
-                        <?= sanitizeInput($profile['linkedin']) ?>
-                    </a>
-                </p>
+                    <p class="text-muted profile-link">
+                        <a href="<?= sanitizeInput($profile['linkedin']) ?>" target="_blank">
+                            <?= sanitizeInput($profile['linkedin']) ?>
+                        </a>
+                    </p>
                 </div>
                 <?php endif; ?>
 
@@ -125,10 +137,9 @@ if (!empty($_FILES['profile_picture']['name'])) {
                     <p class="text-muted bio-text"><?= nl2br(sanitizeInput($profile['bio'])) ?></p>
                 </div>
 
-
                 <!-- Action Buttons -->
                 <div class="profile-actions" style="margin-top: 20px;">
-                    <a href="edit_profile.php" class="table-action-btn edit" >Edit Profile</a>
+                    <a href="edit_profile.php" class="table-action-btn edit">Edit Profile</a>
                 </div>
 
             </div>
